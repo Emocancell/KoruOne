@@ -1,0 +1,2 @@
+# Security
+JWT OIDC via Keycloak; backend checks role claims for mutations. HR only can change salary; marketing only can change prices; advertising only can publish; all authenticated users can create tickets. Control API uses separate audience. Configure Keycloak protocol mappers for `roles` claim and audience mapping. Demo uses localhost; production requires HTTPS, network policies, MFA, audit retention, DB roles and additional object-level authorization.

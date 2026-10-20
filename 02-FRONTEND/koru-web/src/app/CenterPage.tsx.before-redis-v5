@@ -1,0 +1,154 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { UserManager } from "oidc-client-ts";
+import HrWorkspace from "./HrWorkspace";
+
+type Mode = "hr" | "admin" | "redis";
+
+export default function CenterPage({ mode }: { mode: Mode }) {
+  const [token, setToken] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [status, setStatus] = useState("Oturum kontrol ediliyor...");
+  const [data, setData] = useState<any>(null);
+
+  const permitted = {
+    hr: ["hr", "admin"],
+    admin: ["admin"],
+    redis: ["redis-viewer", "redis-operator", "admin"]
+  }[mode];
+
+  const allowed = roles.some(r => permitted.includes(r));
+
+  useEffect(() => {
+    let active = true;
+
+    async function initialize() {
+      try {
+        const authority = process.env.NEXT_PUBLIC_OIDC_AUTHORITY;
+        if (!authority) throw Error("OIDC yapılandırması yok");
+
+        const manager = new UserManager({
+          authority,
+          client_id: "koru-web",
+          redirect_uri: window.location.origin + "/callback",
+          response_type: "code",
+          scope: "openid profile email"
+        });
+
+        const user = await manager.getUser();
+
+        if (!user || user.expired)
+          throw Error("Önce kurumsal giriş yapın.");
+
+        const headers = {
+          Authorization: `Bearer ${user.access_token}`
+        };
+
+        const meResponse = await fetch("/api/me", { headers });
+
+        if (!meResponse.ok)
+          throw Error("API oturumu doğrulayamadı.");
+
+        const me = await meResponse.json();
+        const r: string[] = Array.isArray(me.roles) ? me.roles : [];
+
+        if (!active) return;
+
+        setRoles(r);
+        setToken(user.access_token);
+
+        if (!r.some(role => permitted.includes(role))) {
+          setStatus("Bu merkeze erişim yetkiniz bulunmuyor.");
+          return;
+        }
+
+        setStatus("");
+
+        if (mode !== "hr") {
+          const res = await fetch("/api/dashboard", {
+            headers,
+            cache: "no-store"
+          });
+
+          if (!res.ok) throw Error("Dashboard HTTP " + res.status);
+          const result = await res.json();
+          if (active) setData(result);
+        }
+      } catch (err) {
+        if (active)
+          setStatus(err instanceof Error ? err.message : "Bağlantı hatası");
+      }
+    }
+
+    void initialize();
+    return () => { active = false; };
+  }, [mode]);
+
+  const heading = {
+    hr: "İnsan Kaynakları Merkezi",
+    admin: "Admin Pro Merkezi",
+    redis: "Redis Intelligence"
+  }[mode];
+
+  return (
+    <main style={{
+      maxWidth: 1250, margin: "36px auto", padding: "0 22px"
+    }}>
+      <p className="muted">KORU ONE / DEPARTMAN MERKEZİ</p>
+      <h1>{heading}</h1>
+
+      {status && (
+        <section className="card">
+          <p role="status">{status}</p>
+          <a href="/">Ana sayfaya dön</a>
+        </section>
+      )}
+
+      {allowed && token && mode === "hr" && (
+        <HrWorkspace token={token} />
+      )}
+
+      {allowed && mode === "admin" && (
+        <>
+          <section className="card">
+            <h2>Merkezi Yönetim</h2>
+            <p>Admin hesabıyla bütün departman merkezlerine erişebilirsiniz.</p>
+            <p>
+              Kullanıcı yönetimi ve güvenlik işlemleri ayrı,
+              denetlenebilir API'lerle eklenecek.
+            </p>
+          </section>
+          {data && (
+            <section className="card">
+              <h2>Genel Operasyon Özeti</h2>
+              <p>Personel: {data.data?.employees ?? "—"}</p>
+              <p>Ticket: {data.data?.tickets ?? "—"}</p>
+              <p>Açık Ticket: {data.data?.openTickets ?? "—"}</p>
+              <p>Ürün: {data.data?.products ?? "—"}</p>
+              <p>Reklam: {data.data?.advertisements ?? "—"}</p>
+            </section>
+          )}
+        </>
+      )}
+
+      {allowed && mode === "redis" && (
+        <section className="card">
+          <h2>Redis Cache Gözlemi</h2>
+          {data ? (
+            <>
+              <p>Veri kaynağı: <b>{data.source}</b></p>
+              <p>Sorgu süresi: {
+                Number(data.elapsedMs).toFixed(2)
+              } ms</p>
+              <p className="muted">
+                Bu ölçüm API dashboard isteğine aittir;
+                tüm Redis altyapısının sağlık testi değildir.
+              </p>
+            </>
+          ) : <p>Veriler yükleniyor...</p>}
+        </section>
+      )}
+    </main>
+  );
+}

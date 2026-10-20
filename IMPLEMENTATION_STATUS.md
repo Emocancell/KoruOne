@@ -1,0 +1,4 @@
+# Implementation status
+**Implemented source:** Next.js portal/login callback, .NET API endpoints for departments, employees, HR salary, tickets, products/pricing, advertising, dashboard and CSV, PostgreSQL schema, Redis cache-aside metrics, separate read-only Redis control endpoint.
+**Not implemented:** production Keycloak realm provisioning, fine-grained resource ABAC, maker-checker, secure Redis node detach/upgrade/attach, failover workflows, Redis Streams workers, Redis Enterprise feature parity, Excel XLSX, salary analytics charts, complete CRUD, OpenShift manifests, CI/CD, automatic tests, hardened production security.
+**Build status:** not compiled in this environment (.NET SDK unavailable). Dependency versions must be verified with restore; deployment requires integration testing. Do not use real personal or salary data.
