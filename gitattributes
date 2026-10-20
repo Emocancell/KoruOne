@@ -1,0 +1,32 @@
+# KORU ONE — consistent line endings across Windows/Linux/macOS.
+* text=auto
+
+# Scripts and configuration used in Linux containers.
+*.sh text eol=lf
+*.bash text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.env.example text eol=lf
+Dockerfile* text eol=lf
+*.Dockerfile text eol=lf
+
+# Visual Studio and Windows batch scripts.
+*.sln text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Keep binary assets unchanged.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.xlsx binary
+*.zip binary
+*.woff binary
+*.woff2 binary
+*.pfx binary
+*.p12 binary

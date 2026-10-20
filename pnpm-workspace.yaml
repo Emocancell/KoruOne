@@ -1,0 +1,5 @@
+# KORU ONE frontend workspace
+# 02-FRONTEND/koru-web/package.json will declare name: "@koru-one/web".
+packages:
+  - '02-FRONTEND/*'
+  - '02-FRONTEND/packages/*'
