@@ -1,0 +1,10 @@
+services:
+  keycloak:
+    command:
+      - start-dev
+      - --http-port=8080
+      - --http-relative-path=/auth
+      - --import-realm
+    environment:
+      KC_HOSTNAME: https://stunning-waddle-vpwv69qq797jhwrjp-3000.app.github.dev/auth
+      KC_PROXY_HEADERS: xforwarded

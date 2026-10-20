@@ -1,0 +1,79 @@
+.v5-analytics {
+  display: grid;
+  gap: 22px;
+  margin: 26px 0;
+}
+
+.v5-analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.v5-analytics-header h2 {
+  margin: 6px 0;
+  font-size: 25px;
+}
+
+.v5-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.v5-analytics-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v5-analytics-kpi span {
+  color: #65796d;
+  font-size: 13px;
+}
+
+.v5-analytics-kpi strong {
+  font-size: 27px;
+  color: #184c39;
+}
+
+.v5-analytics-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 45px;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.v5-analytics-track {
+  height: 13px;
+  border-radius: 12px;
+  background: #e5eee8;
+  overflow: hidden;
+}
+
+.v5-analytics-fill {
+  background: #287a56;
+  height: 100%;
+  border-radius: 12px;
+  transition: width .3s ease;
+}
+
+.v5-salary-group {
+  padding: 16px 0;
+  border-bottom: 1px solid #e5ece7;
+}
+
+.v5-salary-group .muted {
+  margin: 5px 0;
+}
+
+@media(max-width:650px) {
+  .v5-analytics-row {
+    grid-template-columns: 85px 1fr 30px;
+    gap: 8px;
+    font-size: 12px;
+  }
+}

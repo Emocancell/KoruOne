@@ -1,0 +1,252 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+
+internal static class V5Visibility
+{
+    private static IQueryable<Ticket> VisibleTickets(
+        AppDb db, ClaimsPrincipal user)
+    {
+        var query = db.Tickets.AsNoTracking();
+
+        if (Auth.Has(user, "admin", "network", "it"))
+            return query;
+
+        var id = Auth.UserId(user);
+        return query.Where(t => t.CreatedBy == id);
+    }
+
+    internal static async Task<IResult> Tickets(
+        AppDb db, ClaimsPrincipal user)
+    {
+        var data = await VisibleTickets(db, user)
+            .OrderByDescending(t => t.Id)
+            .Take(200)
+            .ToListAsync();
+
+        return Results.Ok(data);
+    }
+
+    internal static async Task<IResult> Dashboard(
+        AppDb db, RedisConnection redis, ClaimsPrincipal user)
+    {
+        var watch = Stopwatch.StartNew();
+
+        var identity = Auth.UserId(user) + "|" +
+            string.Join(",", Auth.Roles(user).OrderBy(x => x));
+
+        var key = "koru:v5:dashboard:" +
+            Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(identity))
+            );
+
+        try
+        {
+            if (redis.Client?.IsConnected == true)
+            {
+                var cached = await redis.Client
+                    .GetDatabase().StringGetAsync(key);
+
+                if (cached.HasValue)
+                {
+                    return Results.Ok(new
+                    {
+                        source = "redis-hit",
+                        elapsedMs = watch.Elapsed.TotalMilliseconds,
+                        data = JsonSerializer.Deserialize<JsonElement>(
+                            cached.ToString())
+                    });
+                }
+            }
+        }
+        catch { /* PostgreSQL fallback */ }
+
+        var tickets = VisibleTickets(db, user);
+
+        var canSeeHr = Auth.Has(user, "admin", "hr");
+
+        var data = new
+        {
+            employees = canSeeHr
+                ? (int?)await db.Employees.CountAsync()
+                : null,
+
+            tickets = await tickets.CountAsync(),
+
+            openTickets = await tickets
+                .CountAsync(t => t.Status != "closed"),
+
+            products = await db.Products.CountAsync(),
+
+            advertisements = await db.Advertisements
+                .CountAsync(a => a.Published)
+        };
+
+        try
+        {
+            if (redis.Client?.IsConnected == true)
+                await redis.Client.GetDatabase().StringSetAsync(
+                    key, JsonSerializer.Serialize(data),
+                    TimeSpan.FromSeconds(5));
+        }
+        catch { /* Cache failure must not block reads */ }
+
+        return Results.Ok(new
+        {
+            source = "postgresql",
+            elapsedMs = watch.Elapsed.TotalMilliseconds,
+            data
+        });
+    }
+
+    internal static async Task<IResult> Analytics(
+        AppDb db, ClaimsPrincipal user)
+    {
+        var tickets = VisibleTickets(db, user);
+
+        var byStatus = await tickets
+            .GroupBy(t => t.Status)
+            .Select(g => new { label = g.Key, count = g.Count() })
+            .ToListAsync();
+
+        var canSeeHr = Auth.Has(user, "admin", "hr");
+
+        object? salary = null;
+
+        if (canSeeHr)
+        {
+            var groups = await db.Employees.AsNoTracking()
+                .GroupBy(e => e.Department)
+                .Select(g => new
+                {
+                    department = g.Key,
+                    employees = g.Count(),
+                    averageSalary = g.Average(e => e.Salary),
+                    totalSalary = g.Sum(e => e.Salary)
+                })
+                .ToListAsync();
+
+            salary = groups;
+        }
+
+        return Results.Ok(new
+        {
+            ticketTotal = await tickets.CountAsync(),
+            ticketsByStatus = byStatus,
+            salaryByDepartment = salary,
+            productCount = await db.Products.CountAsync(),
+            publishedAds = await db.Advertisements
+                .CountAsync(a => a.Published)
+        });
+    }
+
+    internal static async Task<IResult> TicketsCsv(
+        AppDb db, ClaimsPrincipal user)
+    {
+        var tickets = await VisibleTickets(db, user)
+            .OrderByDescending(x => x.Id)
+            .Take(10000)
+            .ToListAsync();
+
+        static string Csv(string? text)
+        {
+            var value = (text ?? "")
+                .Replace("\r", " ").Replace("\n", " ");
+
+            if (value.Length > 0 && "=+-@\t".Contains(value[0]))
+                value = "'" + value;
+
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        var rows = new List<string>
+        {
+            "ID,Baslik,Departman,Durum"
+        };
+
+        rows.AddRange(tickets.Select(t =>
+            $"{t.Id},{Csv(t.Title)},{Csv(t.Department)},{Csv(t.Status)}"));
+
+        return Results.File(
+            Encoding.UTF8.GetBytes(
+                "\uFEFF" + string.Join("\r\n", rows)),
+            "text/csv",
+            "koru-tickets.csv"
+        );
+    }
+
+    internal static async Task<IResult> RedisMetrics(
+        RedisConnection redis, ClaimsPrincipal user)
+    {
+        if (!Auth.Has(user,
+            "admin", "redis-viewer", "redis-operator"))
+            return Results.Forbid();
+
+        if (redis.Client?.IsConnected != true)
+            return Results.Problem(
+                "Redis bağlantısı kullanılamıyor.",
+                statusCode: 503);
+
+        try
+        {
+            var server = redis.Client.GetServer(
+                redis.Client.GetEndPoints().First());
+
+            var sections = await server.InfoAsync();
+
+            var info = sections
+                .SelectMany(g => g)
+                .GroupBy(kv => kv.Key)
+                .ToDictionary(g => g.Key, g => g.Last().Value);
+
+            long Number(string name)
+            {
+                return info.TryGetValue(name, out var value) &&
+                    long.TryParse(value, NumberStyles.Integer,
+                        CultureInfo.InvariantCulture, out var number)
+                    ? number : 0;
+            }
+
+            string Text(string name)
+                => info.TryGetValue(name, out var v) ? v : "—";
+
+            var hits = Number("keyspace_hits");
+            var misses = Number("keyspace_misses");
+            var total = hits + misses;
+
+            return Results.Ok(new
+            {
+                connected = true,
+                version = Text("redis_version"),
+                role = Text("role"),
+                memoryBytes = Number("used_memory"),
+                memoryRssBytes = Number("used_memory_rss"),
+                maxMemoryBytes = Number("maxmemory"),
+                clients = Number("connected_clients"),
+                rejectedConnections = Number("rejected_connections"),
+                hits,
+                misses,
+                hitRatio = total > 0
+                    ? Math.Round(100.0 * hits / total, 2)
+                    : 0,
+                evictions = Number("evicted_keys"),
+                expired = Number("expired_keys"),
+                operationsPerSecond =
+                    Number("instantaneous_ops_per_sec"),
+                totalKeys = await server.DatabaseSizeAsync(0),
+                uptimeSeconds = Number("uptime_in_seconds"),
+                checkedAt = DateTime.UtcNow
+            });
+        }
+        catch (Exception)
+        {
+            return Results.Problem(
+                "Redis INFO okunamadı. Bağlantı veya ACL yetkisini kontrol edin.",
+                statusCode: 503);
+        }
+    }
+}

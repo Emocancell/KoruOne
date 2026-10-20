@@ -1,0 +1,564 @@
+*{box-sizing:border-box}body{margin:0;background:#f6f8f7;color:#18372c;font-family:Arial,Helvetica,sans-serif}header{padding:22px 5%;background:white;border-bottom:1px solid #dbe5df;display:flex;justify-content:space-between;align-items:center}main{max-width:1180px;margin:32px auto;padding:0 20px}h1{font-size:32px}h2{font-size:19px}.brand{font-size:23px;font-weight:800;letter-spacing:1px}.brand span{color:#318365}.muted{color:#61756a}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:22px 0}.card{background:white;border:1px solid #e2ebe5;border-radius:14px;padding:22px;box-shadow:0 4px 20px #0a2e1a08}.card strong{display:block;font-size:27px;margin-top:10px}.row{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}button,a.action{border:0;border-radius:9px;padding:11px 15px;background:#237756;color:white;cursor:pointer;text-decoration:none}button.secondary{background:#e7f0ea;color:#215940}table{border-collapse:collapse;width:100%;background:white}td,th{padding:12px;border-bottom:1px solid #e6ebe7;text-align:left}input{padding:10px;border:1px solid #ccd9d0;border-radius:8px;max-width:260px}.error{color:#a02d2d}section{margin-top:30px}
+
+/* KORU ONE - HR Workspace */
+.hr-workspace { margin-top: 28px; }
+.hr-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.hr-heading h2 { margin:4px 0 8px; font-size:24px; }
+.hr-stats {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:14px;
+  margin-bottom:24px;
+}
+.hr-stats .card strong {
+  font-size:24px;
+  overflow-wrap:anywhere;
+}
+.hr-form {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:16px;
+  margin:20px 0;
+}
+.hr-form label {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  font-weight:600;
+}
+.hr-form input,.hr-form select {
+  width:100%;
+  max-width:none;
+  padding:12px;
+  border:1px solid #d7e2db;
+  border-radius:9px;
+  background:white;
+  color:#173d30;
+}
+.hr-table-wrap { overflow-x:auto; }
+.hr-salary-action { display:flex; gap:8px; }
+.hr-salary-action input { width:125px; }
+.hr-message { color:#23634b; font-weight:600; }
+
+/* KORU ONE - NETWORK / IT OPERATIONS */
+.ops-container {
+  max-width: 1250px;
+  margin: 36px auto;
+  padding: 0 22px 60px;
+}
+.ops-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.ops-heading h1 {
+  font-size: clamp(25px, 3vw, 36px);
+  margin: 8px 0;
+}
+.ops-actions, .ops-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ops-button {
+  display: inline-block;
+  padding: 11px 15px;
+  border-radius: 9px;
+  text-decoration: none;
+}
+.ops-button.secondary {
+  color: #215940;
+  background: #e7f0ea;
+}
+.ops-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(190px,1fr));
+  gap: 15px;
+  margin: 24px 0;
+}
+.ops-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+.ops-form input { flex: 1; min-width: 220px; max-width: none; }
+.ops-form select, .ops-heading select {
+  padding: 11px 13px;
+  border: 1px solid #d8e4dc;
+  border-radius: 8px;
+  background: white;
+  color: #18372c;
+}
+.ops-table { overflow-x: auto; }
+.ops-table table { min-width: 650px; }
+.ops-status {
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ops-status.open { background: #fff2db; color: #865300; }
+.ops-status.in_progress { background: #e6efff; color: #24519a; }
+.ops-status.closed { background: #e0f3e8; color: #276044; }
+.ops-row-actions button { padding: 8px 11px; }
+.ops-message { color: #237756; font-weight: 600; }
+
+/* Ticket workflow v3 */
+.koru-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15,33,25,.55);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.koru-modal {
+  width: min(520px,100%);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.koru-modal textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #cbdcd1;
+  border-radius: 9px;
+  font: inherit;
+  resize: vertical;
+}
+.koru-notifications { margin: 20px 0; }
+.koru-notice {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e5ebe7;
+}
+.koru-notice p { margin: 7px 0; overflow-wrap: anywhere; }
+.koru-notice small { color: #667c71; }
+
+/* KORU ONE - COMMERCIAL WORKSPACES */
+.commerce-container {
+  max-width: 1260px;
+  margin: 32px auto;
+  padding: 0 22px 60px;
+}
+.commerce-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.commerce-form {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+.commerce-form input,
+.commerce-form textarea {
+  flex: 1;
+  min-width: 210px;
+  max-width: none;
+}
+.commerce-form textarea {
+  min-height: 92px;
+  padding: 12px;
+  font: inherit;
+  border: 1px solid #d6e2d9;
+  border-radius: 9px;
+}
+.commerce-table { overflow-x: auto; }
+.commerce-table table { min-width: 900px; }
+.commerce-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.commerce-cell input { width: 105px; }
+.commerce-ad {
+  border-bottom: 1px solid #e3ebe5;
+  padding: 18px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.commerce-ad h3 { margin: 0 0 8px; }
+.commerce-ad p { overflow-wrap: anywhere; }
+.commerce-published { color: #237756; font-weight: 700; }
+.commerce-draft { color: #8d6b29; }
+.commerce-success { color: #237756; font-weight: 700; }
+
+.koru-department-nav {
+  max-width: 1180px;
+  margin: 15px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.koru-department-nav a {
+  display: inline-block;
+  background: #e8f0eb;
+  color: #235943;
+  padding: 11px 16px;
+  border-radius: 9px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.koru-department-nav a:hover {
+  background: #dcebe1;
+}
+
+/* KORU ONE v4 - Corporate Navigation */
+.koru-global-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #dfe8e2;
+  position: relative;
+  z-index: 20;
+}
+
+.koru-global-nav-inner {
+  max-width: 1320px;
+  padding: 11px 20px;
+  margin: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.koru-global-nav-link {
+  text-decoration: none;
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #415b4d;
+  transition: background 0.15s;
+}
+
+.koru-global-nav-link:hover {
+  background: #edf3ef;
+  color: #175f42;
+}
+
+.koru-global-nav-link.active {
+  background: #e1eee6;
+  color: #176647;
+}
+
+@media (max-width: 700px) {
+  .koru-global-nav-inner {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .koru-global-nav-link {
+    white-space: nowrap;
+  }
+}
+
+/* KORU ONE v4 - Universal navigation */
+.koru-global-nav {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #dce7df;
+  box-shadow: 0 2px 12px rgba(24,57,39,.035);
+  position: relative;
+  z-index: 30;
+}
+.koru-global-nav-inner {
+  max-width: 1480px;
+  margin: auto;
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.koru-brand {
+  color: #176345;
+  font-size: 18px;
+  font-weight: 800;
+  text-decoration: none;
+  margin-right: 16px;
+  white-space: nowrap;
+}
+.koru-global-nav-link {
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #42594c;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.koru-global-nav-link:hover,
+a.koru-global-nav-link.active {
+  background: #e5f0e9;
+  color: #176345;
+}
+.koru-locked {
+  color: #9baaa0;
+  background: #f6f8f6;
+  cursor: not-allowed;
+}
+.koru-login-link {
+  margin-left: auto;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #176345;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+.koru-admin-label {
+  background: #e2f0e8;
+  color: #176345;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+}
+@media(max-width: 850px) {
+  .koru-global-nav-inner {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .koru-login-link { margin-left: 0; white-space: nowrap; }
+}
+
+/* KORU ONE v5 - Redis Intelligence */
+
+.v5-redis-dashboard {
+  display: grid;
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.v5-redis-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.v5-redis-heading h2 {
+  margin: 6px 0;
+}
+
+.v5-redis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.v5-redis-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v5-redis-metric span {
+  color: #647a6c;
+  font-size: 13px;
+}
+
+.v5-redis-metric strong {
+  color: #164f3c;
+  font-size: 23px;
+  overflow-wrap: anywhere;
+}
+
+.v5-redis-progress {
+  width: 100%;
+  height: 18px;
+  background: #e4ede7;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 15px 0;
+}
+
+.v5-redis-progress div {
+  height: 100%;
+  background: #27815c;
+  border-radius: 10px;
+  transition: width .3s ease;
+}
+
+/* KORU ONE V6 - Commerce Operations */
+.v6-commerce {
+  display: grid;
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.v6-commerce-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.v6-commerce-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.v6-commerce-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(155px,1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.v6-commerce-kpis>div {
+  background: #f4f7f5;
+  border: 1px solid #e0e8e3;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.v6-commerce-kpis small {
+  color: #607467;
+}
+
+.v6-commerce-kpis strong {
+  font-size: 22px;
+  color: #175f42;
+}
+
+.v6-commerce-scroll {
+  overflow-x: auto;
+}
+
+.v6-commerce-scroll table {
+  width: 100%;
+  min-width: 780px;
+}
+
+/* KORU ONE V6 - Commerce Operations */
+.v6-commerce {
+  display: grid;
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.v6-commerce-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.v6-commerce-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.v6-commerce-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(155px,1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.v6-commerce-kpis>div {
+  background: #f4f7f5;
+  border: 1px solid #e0e8e3;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.v6-commerce-kpis small {
+  color: #607467;
+}
+
+.v6-commerce-kpis strong {
+  font-size: 22px;
+  color: #175f42;
+}
+
+.v6-commerce-scroll {
+  overflow-x: auto;
+}
+
+.v6-commerce-scroll table {
+  width: 100%;
+  min-width: 780px;
+}
+
+/* KORU ONE V6 - PUBLIC STORE */
+.koru-store { max-width:1320px; margin:32px auto; padding:0 22px 50px; }
+.koru-store-intro { margin-bottom:28px; }
+.koru-store-intro h1 { margin-bottom:8px; }
+.koru-store-intro p { max-width:750px; }
+.koru-store-actions { display:flex; gap:12px; align-items:center; }
+.koru-store-home { color:#226648; text-decoration:none; font-weight:600; }
+.koru-store-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(265px,1fr));
+  gap:18px;
+}
+.koru-product { display:flex; flex-direction:column; margin:0; }
+.koru-product-top,.koru-store-modal-head {
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+}
+.koru-product-badge {
+  background:#e3f0e8; color:#176444;
+  border-radius:30px; padding:6px 12px; font-size:12px; font-weight:700;
+}
+.koru-product-symbol {
+  height:115px; margin:16px 0; background:#f1f5f2;
+  border:1px solid #e1e9e3; border-radius:12px;
+  display:flex; justify-content:center; align-items:center;
+  font-size:52px; color:#9bb2a4;
+}
+.koru-product h2 { margin:0 0 9px; }
+.koru-old-price { text-decoration:line-through; color:#829187; margin:8px 0 0; }
+.koru-product-price { font-size:25px; font-weight:800; color:#175c40; margin-top:10px; }
+.koru-product-discount { color:#25714d; font-size:13px; font-weight:700; }
+.koru-product-buttons { display:flex; flex-wrap:wrap; gap:9px; margin-top:auto; padding-top:18px; }
+.koru-product-buttons button { flex:1; }
+.koru-store-success { border-color:#b6dbc2; }
+.koru-store-overlay {
+  position:fixed; inset:0; z-index:1000;
+  background:#14261daa; display:flex; align-items:center;
+  justify-content:center; padding:20px;
+}
+.koru-store-modal {
+  background:white; border-radius:16px; padding:25px;
+  width:min(100%,490px); max-height:90vh; overflow:auto;
+  box-shadow:0 16px 70px #0003;
+}
+.koru-store-form { display:grid; gap:15px; margin-top:20px; }
+.koru-store-form label { display:grid; gap:6px; font-weight:600; font-size:14px; }
+.koru-store-form input { width:100%; max-width:none; }

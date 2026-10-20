@@ -1,0 +1,37 @@
+KORU ONE — PROPRIETARY LICENSE NOTICE (DRAFT)
+Version: 0.1 | October 2026
+
+Copyright (c) 2026 [LEGAL ENTITY / COPYRIGHT HOLDER].
+All rights reserved.
+
+The KORU ONE project source code, documentation, visual assets, and other
+original project materials are proprietary unless a specific file explicitly
+states otherwise.
+
+No license to use, copy, modify, distribute, sublicense, or commercially
+exploit these original materials is granted by this notice. Written
+permission from the rights holder is required, except where applicable
+law provides otherwise.
+
+THIRD-PARTY COMPONENTS
+
+This notice does not supersede licenses applicable to third-party software,
+including Redis, PostgreSQL, Keycloak, Next.js, .NET, or their dependencies.
+Each component remains governed by its own applicable license. In particular,
+the choice of Redis distribution/version/license and the conditions of its
+use or distribution require a separate legal/compliance assessment.
+
+NO WARRANTY
+
+To the extent permitted by applicable law, materials provided without a
+separate written agreement are supplied "AS IS", without warranty.
+
+BEFORE PUBLICATION
+
+1. Replace [LEGAL ENTITY / COPYRIGHT HOLDER] with the actual rights holder.
+2. Confirm ownership and contribution rights.
+3. Complete a dependency/license inventory and legal review.
+4. Replace this draft if an open-source license is selected.
+
+This file is an interim rights-reservation notice, not a substitute for
+legal advice or a completed commercial license agreement.

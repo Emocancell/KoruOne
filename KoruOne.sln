@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KoruOne.Api", "03-BACKEND/KoruOne.Api/KoruOne.Api.csproj", "{E7C0A30B-C17D-4EF2-985E-001A27F9DE11}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KoruOne.Redis.Control.Api", "04-REDIS/KoruOne.Redis.Control.Api/KoruOne.Redis.Control.Api.csproj", "{E7C0A30B-C17D-4EF2-985E-001A27F9DE12}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7C0A30B-C17D-4EF2-985E-001A27F9DE12}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
