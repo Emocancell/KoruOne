@@ -16,6 +16,17 @@ const centers = [
   { title: "Reklam Merkezi", url: "/advertising", roles: ["advertising", "admin"] },
   { title: "Redis Intelligence", url: "/redis-intelligence",
     roles: ["redis-viewer", "redis-operator", "admin"] },
+  { title: "Redis Node Fleet", url: "/redis-fleet",
+    roles: ["redis-viewer", "redis-operator", "admin"] },
+  { title: "Redis Diagnostics",
+    url: "/redis-diagnostics",
+    roles: ["redis-viewer", "redis-operator", "admin"] },
+  { title: "Redis Streams Ops",
+    url: "/redis-streams-ops",
+    roles: ["admin", "redis-viewer", "redis-operator"] },
+  { title: "Redis ACL Security",
+    url: "/redis-acl",
+    roles: ["admin", "redis-operator"] },
   { title: "Admin Pro", url: "/admin-pro", roles: ["admin"] }
 ];
 

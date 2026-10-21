@@ -1,7 +1,9 @@
 "use client";
+import V7RedisNumericCharts from "./V7RedisNumericCharts";
 import V6CommerceQueue from "./V6CommerceQueue";
 import V5Analytics from "./V5Analytics";
-import V5RedisPanel from "./V5RedisPanel";
+import V7RedisDashboard from "./V7RedisDashboard";
+import "./V7RedisDashboard.css";
 
 import { useEffect, useState } from "react";
 import { UserManager } from "oidc-client-ts";
@@ -152,9 +154,10 @@ export default function CenterPage({ mode }: { mode: Mode }) {
           ) : <p>Veriler yükleniyor...</p>}
         </section>
       )}
-      {allowed && mode === "redis" && token && <V5RedisPanel token={token} />}
-      {allowed && token && <V5Analytics token={token} />}
+      {allowed && mode === "redis" && token && <V7RedisDashboard token={token} />}
+      {allowed && mode === "admin" && token && <V5Analytics token={token} />}
     {allowed && mode === "admin" && token && <V6CommerceQueue token={token} />}
+{allowed && mode === "redis" && token && <V7RedisNumericCharts token={token} />}
 </main>
   );
 }
