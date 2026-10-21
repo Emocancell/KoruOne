@@ -29,10 +29,38 @@ api.MapPost("/departments", async (AppDb db, RedisConnection redis, ClaimsPrinci
  var entity=new Department{Name=input.Name.Trim()};db.Departments.Add(entity);await db.SaveChangesAsync();await Cache.Clear(redis);return Results.Created($"/api/departments/{entity.Id}",entity);
 });
 api.MapGet("/tickets", V5Visibility.Tickets);
+
+api.MapGet("/tickets/mine", async (
+    AppDb db, ClaimsPrincipal user) =>
+{
+    var userId = Auth.UserId(user);
+
+    return Results.Ok(await db.Tickets
+        .AsNoTracking()
+        .Where(t => t.CreatedBy == userId)
+        .OrderByDescending(t => t.Id)
+        .Take(200)
+        .Select(t => new {
+            t.Id,
+            t.Title,
+            t.Department,
+            t.Status
+        })
+        .ToListAsync());
+});
+
 api.MapPost("/tickets",async (AppDb db,RedisConnection redis,ClaimsPrincipal u,TicketInput input)=>{
  if(string.IsNullOrWhiteSpace(input.Title))return Results.BadRequest();var entity=new Ticket{Title=input.Title.Trim(),Department=input.Department,CreatedBy=Auth.UserId(u),Status="open"};db.Tickets.Add(entity);await db.SaveChangesAsync();await Cache.Clear(redis);return Results.Created($"/api/tickets/{entity.Id}",entity);
 });
-api.MapGet("/employees",async (AppDb db,ClaimsPrincipal u)=> Results.Ok(await db.Employees.AsNoTracking().Select(e=>new {e.Id,e.Name,e.Department}).ToListAsync()));
+api.MapGet("/employees", async (AppDb db, ClaimsPrincipal u) =>
+{
+    if (!Auth.Has(u, "hr", "admin"))
+        return Results.Forbid();
+
+    return Results.Ok(await db.Employees.AsNoTracking()
+        .Select(e => new { e.Id, e.Name, e.Department })
+        .ToListAsync());
+});
 api.MapGet("/hr/salaries",async (AppDb db,ClaimsPrincipal u)=> Auth.Has(u,"admin","hr")?Results.Ok(await db.Employees.AsNoTracking().ToListAsync()):Results.Forbid());
 api.MapPut("/hr/salaries/{id:int}",async (int id,SalaryInput input,AppDb db,ClaimsPrincipal u)=>{
  if(!Auth.Has(u,"hr"))return Results.Forbid();if(input.Amount<0)return Results.BadRequest();var e=await db.Employees.FindAsync(id);if(e==null)return Results.NotFound();e.Salary=input.Amount;db.Audits.Add(new Audit{Actor=u.Identity?.Name??"hr",Action="salary.change",Target=$"employee:{id}",Details=$"changed; old/new values redacted"});await db.SaveChangesAsync();return Results.Ok(new {id,updated=true});
@@ -67,8 +95,12 @@ app.MapGet("/api/v5/reports/tickets.csv", V5Visibility.TicketsCsv)
 app.MapGet("/api/v5/redis/metrics", V5Visibility.RedisMetrics)
    .RequireAuthorization();
 
+app.MapRedisFleetReadOnly();
 app.MapV6Store();
 app.MapV6CommerceOps();
+app.MapRedisDiagnostics();
+app.MapRedisV78();
+app.MapRedisAclProV79();
 app.Run();
 
 record DepartmentInput(string Name);record TicketInput(string Title,string Department);record StatusInput(string Status);record SalaryInput(decimal Amount);record ProductInput(string Name,decimal Price);record PriceInput(decimal Price);record AdInput(string Title,string Content);

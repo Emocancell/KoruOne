@@ -1,0 +1,28 @@
+.v7-redis{display:grid;gap:22px;margin:24px 0 50px}
+.v7-hero,.v7-panel,.v7-stat{
+ background:#fff;border:1px solid #e2e8e5;border-radius:14px;
+ padding:22px
+}
+.v7-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.v7-hero h2{font-size:27px;margin:7px 0}
+.v7-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.v7-online{color:#16754d;font-weight:700}
+.v7-offline{color:#a94442;font-weight:700}
+.v7-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.v7-stat span{display:block;color:#65746d;font-size:13px}
+.v7-stat strong{display:block;font-size:25px;margin-top:12px;overflow-wrap:anywhere}
+.v7-panel h3{margin:0 0 15px}
+.v7-panel-heading{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.v7-chart{height:210px;display:flex;align-items:end;gap:5px;border-bottom:1px solid #dae4df;padding:15px 0;margin:18px 0}
+.v7-chart-col{flex:1;height:100%;display:flex;align-items:end;min-width:3px}
+.v7-chart-col div{width:100%;background:#23866a;border-radius:4px 4px 0 0}
+.v7-progress{height:11px;background:#e9efeb;border-radius:20px;overflow:hidden}
+.v7-progress div{height:100%;background:#23866a}
+.v7-bottom{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:850px){
+ .v7-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .v7-bottom{grid-template-columns:1fr}
+}
+@media(max-width:450px){
+ .v7-stats{grid-template-columns:1fr}
+}

@@ -1,7 +1,6 @@
 "use client";
 import TicketInbox from "./TicketInbox";
 
-import HrWorkspace from "./HrWorkspace";
 import {useEffect,useState} from 'react';
 import {UserManager} from 'oidc-client-ts';
 const authority=process.env.NEXT_PUBLIC_OIDC_AUTHORITY||'http://localhost:8081/realms/koru';
@@ -44,7 +43,7 @@ async function request(path:string,opts:RequestInit={}){const res=await fetch(ap
  throw Error('HTTP '+res.status+' - '+message.slice(0,350));
 }
 return res.json()}
-async function refresh(){try{const [u,d,t,p,a]=await Promise.all([request('/api/me'),request('/api/dashboard'),request('/api/tickets'),request('/api/products'),request('/api/advertisements')]);setMe(u);setDashboard(d);setTickets(t);setProducts(p);setAds(a);setError('')}catch(e:any){setError(e.message)}}
+async function refresh(){try{const [u,d,p,a]=await Promise.all([request('/api/me'),request('/api/dashboard'),request('/api/products'),request('/api/advertisements')]);setMe(u);setDashboard(d);setProducts(p);setAds(a);setError('')}catch(e:any){setError(e.message)}}
 useEffect(()=>{manager?.getUser().then(u=>{if(u?.access_token && !u.expired)setToken(u.access_token)})},[]);
 useEffect(()=>{if(token)refresh()},[token]);
 
@@ -98,16 +97,28 @@ return <><header><div className="brand">KORU <span>ONE</span></div><div>{me?.nam
   {me?.roles?.some((r:string)=>["advertising","admin"].includes(r)) &&
     <a href="/advertising">Reklam Yönetimi</a>}
 </nav>}
-<nav className="row" style={{maxWidth:1180,margin:"14px auto",padding:"0 20px"}}><a className="action" href="/operations">Network / IT Operasyon Merkezi</a></nav><main><p className="muted">ENTERPRISE OPERATIONS · REDIS INTELLIGENCE</p><h1>Kurumsal Yönetim Merkezi</h1><p className="muted">Departman operasyonları, Redis performansı ve güvenli yetkilendirme tek merkezde.</p>{!token?<div className="card">Dashboard ve departman işlemlerine erişmek için kurumsal hesabınızla giriş yapın.</div>:<><div className="row"><button onClick={refresh}>Yenile</button><button className="secondary" onClick={checkHealth}>
+<main><p className="muted">ENTERPRISE OPERATIONS · REDIS INTELLIGENCE</p><h1>Redis Operations Overview</h1>
+<div className="cards">
+  <div className="card">
+    <h2>Redis Intelligence</h2>
+    <p className="muted">
+      Cache, Streams, bellek, performans ve canlı telemetri.
+    </p>
+    <a className="action" href="/redis-intelligence">
+      Redis Merkezi
+    </a>
+  </div>
+
+  <div className="card">
+    <h2>Departman Merkezleri</h2>
+    <p className="muted">
+      Yetkinize uygun departman işlemlerine üst menüden erişin.
+    </p>
+  </div>
+</div><p className="muted">Departman operasyonları, Redis performansı ve güvenli yetkilendirme tek merkezde.</p>{!token?<div className="card">Dashboard ve departman işlemlerine erişmek için kurumsal hesabınızla giriş yapın.</div>:<><div className="row"><button onClick={refresh}>Yenile</button><button className="secondary" onClick={checkHealth}>
 API Sağlık
 </button>
-{health&&<span role="status">{health}</span>}</div>{error&&<p className="error">{error}</p>}<TicketInbox token={token}/><p className="muted">Roller: {me?.roles?.join(', ')||'—'}</p><div className="cards">{[['Personel',dashboard?.data?.employees],['Toplam Ticket',dashboard?.data?.tickets],['Açık Ticket',dashboard?.data?.openTickets],['Ürün',dashboard?.data?.products],['Reklam',dashboard?.data?.advertisements]].map(([k,v])=><div className="card" key={String(k)}>{k}<strong>{v??'—'}</strong></div>)}</div><div className="card"><h2>Redis Cache Gözlemi</h2><p>Veri kaynağı: <b>{dashboard?.source||'—'}</b></p><p>İstek süresi: <b>{dashboard?.elapsedMs?.toFixed(2)??'—'} ms</b></p><p className="muted">İlk sorgu PostgreSQL; sonraki sorgular Redis HIT olarak ölçülür. Bu değerler gerçek API ölçümleridir.</p></div>{me?.roles?.some((r:string)=>['hr','admin'].includes(r)) && <HrWorkspace token={token} />}{me?.roles?.includes('hr') && <div className='row'><button className='secondary' onClick={()=>setHrSupportOpen(!hrSupportOpen)}>{hrSupportOpen?'Destek Masasını Gizle':'Destek Masasını Aç'}</button></div>}{(!me?.roles?.includes('hr') || hrSupportOpen) && <section className="card"><h2>IT / Network Ticket Yönetimi</h2><div className="row"><input placeholder="Ticket başlığı" value={title} onChange={e=>setTitle(e.target.value)}/><button disabled={!title.trim()} onClick={createTicket}>Ticket Aç</button><button className="secondary" onClick={async()=>{const r=await fetch(api+'/api/reports/tickets.csv',{headers:{Authorization:'Bearer '+token}});if(!r.ok){setError('Rapor yetkisi yok');return}const blob=await r.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='tickets.csv';a.click();URL.revokeObjectURL(url)}}>Excel Uyumlu CSV</button></div><table><thead><tr><th>ID</th><th>Başlık</th><th>Departman</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{tickets.map(t=><tr key={t.id}><td>{t.id}</td><td>{t.title}</td><td>{t.department}</td><td>{t.status}</td>
-<td>
- {canCloseTicket&&t.status!=='closed'&&
- <button onClick={()=>closeTicket(t.id)}>
- Ticket Kapat
- </button>}
-</td></tr>)}</tbody></table></section>}<section className="card"><h2>Ürün Kataloğu</h2><table><tbody>{products.map(p=><tr key={p.id}><td>{p.name}</td><td>
+{health&&<span role="status">{health}</span>}</div>{error&&<p className="error">{error}</p>}<p className="muted">Roller: {me?.roles?.join(', ')||'—'}</p><div className="card"><h2>Redis Cache Gözlemi</h2><p>Veri kaynağı: <b>{dashboard?.source||'—'}</b></p><p>İstek süresi: <b>{dashboard?.elapsedMs?.toFixed(2)??'—'} ms</b></p><p className="muted">İlk sorgu PostgreSQL; sonraki sorgular Redis HIT olarak ölçülür. Bu değerler gerçek API ölçümleridir.</p></div>{me?.roles?.includes('hr') && <div className='row'><button className='secondary' onClick={()=>setHrSupportOpen(!hrSupportOpen)}>{hrSupportOpen?'Destek Masasını Gizle':'Destek Masasını Aç'}</button></div>}<section className="card"><h2>Ürün Kataloğu</h2><table><tbody>{products.map(p=><tr key={p.id}><td>{p.name}</td><td>
   {Number(p.discountPercent||0)>0 ?
     <>
       <s>{Number(p.price).toLocaleString('tr-TR')} ₺</s>

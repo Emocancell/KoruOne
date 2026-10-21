@@ -68,6 +68,7 @@ internal static class V5Visibility
         var tickets = VisibleTickets(db, user);
 
         var canSeeHr = Auth.Has(user, "admin", "hr");
+        var canSeeOperations = Auth.Has(user, "admin", "network", "it");
 
         var data = new
         {
@@ -75,10 +76,11 @@ internal static class V5Visibility
                 ? (int?)await db.Employees.CountAsync()
                 : null,
 
-            tickets = await tickets.CountAsync(),
+            tickets = canSeeOperations ? (int?)await tickets.CountAsync() : null,
 
-            openTickets = await tickets
-                .CountAsync(t => t.Status != "closed"),
+            openTickets = canSeeOperations
+                ? (int?)await tickets.CountAsync(t => t.Status != "closed")
+                : null,
 
             products = await db.Products.CountAsync(),
 
@@ -242,10 +244,13 @@ internal static class V5Visibility
                 checkedAt = DateTime.UtcNow
             });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.Error.WriteLine(
+                $"[REDIS METRICS ERROR] {ex.GetType().Name}: {ex.Message}");
+
             return Results.Problem(
-                "Redis INFO okunamadı. Bağlantı veya ACL yetkisini kontrol edin.",
+                "Redis metrikleri okunamadi. Sunucu loglarini kontrol edin.",
                 statusCode: 503);
         }
     }
