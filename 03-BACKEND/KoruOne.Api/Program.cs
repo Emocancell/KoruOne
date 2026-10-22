@@ -15,10 +15,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<RedisConnection>(_ => new RedisConnection(Environment.GetEnvironmentVariable("REDIS_URL") ?? "localhost:6379,password=change-me-local-cache,abortConnect=false"));
 builder.Services.AddV6StoreRateLimit();
+builder.Services.AddHostedService<RedisMonitoringWorkerV86>();
 var app = builder.Build();
 app.UseRouting();
 app.UseRateLimiter();
 app.UseCors("web");app.UseAuthentication();app.UseAuthorization();
+app.UseRedisDepartmentGateV8();
+app.UseRedisNodeRegistryGateV82();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", app = "KORU ONE" }));
 var api = app.MapGroup("/api").RequireAuthorization();
 api.MapGet("/me", (ClaimsPrincipal u) => Results.Ok(new { name = u.Identity?.Name ?? u.FindFirstValue("preferred_username"), roles = Auth.Roles(u) }));
@@ -101,6 +104,12 @@ app.MapV6CommerceOps();
 app.MapRedisDiagnostics();
 app.MapRedisV78();
 app.MapRedisAclProV79();
+app.MapRedisDepartmentAccessV8();
+app.MapRedisNodeRegistryV82();
+app.MapRedisUserAccessV83();
+app.MapRedisStorageV84();
+app.MapRedisOpsV85();
+app.MapRedisMonitoringV86();
 app.Run();
 
 record DepartmentInput(string Name);record TicketInput(string Title,string Department);record StatusInput(string Status);record SalaryInput(decimal Amount);record ProductInput(string Name,decimal Price);record PriceInput(decimal Price);record AdInput(string Title,string Content);
