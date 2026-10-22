@@ -45,11 +45,17 @@ public static class RedisDiagnosticsModule
                     user,
                     "admin",
                     "redis-viewer",
-                    "redis-operator"))
+                    "redis-operator",
+                    "network"))
                     return Results.Forbid();
 
+                var visible = await
+                    RedisNodeRegistryV82.VisibleNodesAsync(user);
+
                 var reports = await Task.WhenAll(
-                    Nodes.Select(ReadNodeAsync)
+                    Nodes
+                        .Where(n => visible.Contains(n.Id))
+                        .Select(ReadNodeAsync)
                 );
 
                 return Results.Ok(new

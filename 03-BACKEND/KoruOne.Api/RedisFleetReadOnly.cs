@@ -45,14 +45,19 @@ public static class RedisFleetReadOnly
             .RequireAuthorization();
 
         api.MapGet("/nodes",
-            (ClaimsPrincipal user) =>
+            async (ClaimsPrincipal user) =>
         {
             if (!CanView(user))
                 return Results.Forbid();
 
+            var visible = await
+                RedisNodeRegistryV82.VisibleNodesAsync(user);
+
             return Results.Ok(new
             {
-                nodes = Inventory.Select(n => new
+                nodes = Inventory
+                    .Where(n => visible.Contains(n.Id))
+                    .Select(n => new
                 {
                     id = n.Id,
                     name = n.Name,
@@ -214,7 +219,8 @@ public static class RedisFleetReadOnly
             user,
             "admin",
             "redis-viewer",
-            "redis-operator");
+            "redis-operator",
+            "network");
     }
 
     private static async Task<ConnectionMultiplexer> GetConnection(

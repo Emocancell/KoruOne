@@ -1,0 +1,250 @@
+.page {
+  max-width: 1520px;
+  margin: 30px auto;
+  padding: 0 24px 80px;
+  color: #1a3648;
+}
+.heading,.sectionHead {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.heading h1 {
+  font-size:clamp(28px,3vw,38px);
+  letter-spacing:-.8px;
+  margin:8px 0;
+}
+.eyebrow {
+  font-size:11px;
+  color:#087c75;
+  font-weight:800;
+  letter-spacing:1px;
+}
+.muted {
+  font-size:13px;
+  color:#708393;
+  line-height:1.6;
+}
+.actions {
+  display:flex;
+  gap:9px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.actions button,.link {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:11px 15px;
+  border-radius:10px;
+  background:#146f5c;
+  color:white;
+  border:0;
+  text-decoration:none;
+  font-size:13px;
+  cursor:pointer;
+}
+.actions .secondary {
+  background:#e8f3ee;
+  color:#176e54;
+}
+.kpis {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(195px,1fr));
+  gap:14px;
+  margin:24px 0;
+}
+.card,.nodeCard,.panel {
+  border:1px solid #dfe8ed;
+  border-radius:16px;
+  background:white;
+  padding:23px;
+  box-shadow:0 3px 16px #142b3907;
+}
+.card small,.card span {
+  display:block;
+  color:#6c8290;
+  font-size:12px;
+}
+.card strong {
+  display:block;
+  margin:10px 0;
+  font-size:30px;
+}
+.card .mode {
+  color:#137a60;
+  font-size:23px;
+}
+.nodeGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(310px,1fr));
+  gap:16px;
+}
+.nodeHeader {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.nodeHeader small {
+  color:#16826e;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1px;
+}
+.nodeHeader h2 {
+  margin:8px 0;
+  font-size:22px;
+}
+.nodeHeader p {
+  margin:0;
+  font-size:12px;
+  color:#778b97;
+}
+.connected,.unavailable {
+  font-size:10px;
+  font-weight:800;
+  padding:7px 10px;
+  border-radius:20px;
+}
+.connected {
+  background:#e5f4ec;
+  color:#167a58;
+}
+.unavailable {
+  background:#fff1e5;
+  color:#9d651e;
+}
+.nodeMetrics {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:17px;
+  margin:24px 0;
+}
+.nodeMetrics small {
+  display:block;
+  color:#7e909b;
+  font-size:12px;
+}
+.nodeMetrics strong {
+  display:block;
+  margin-top:7px;
+  font-size:21px;
+}
+.nodeFooter {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding-top:15px;
+  border-top:1px solid #e7edef;
+  font-size:12px;
+  color:#718391;
+}
+.panel {margin-top:22px}
+.panel h2 {margin:0;font-size:20px}
+.pill {
+  border-radius:25px;
+  padding:8px 12px;
+  background:#e5f3ee;
+  color:#13765e;
+  font-weight:800;
+  font-size:11px;
+}
+.tableWrap {
+  overflow-x:auto;
+  margin-top:17px;
+}
+.matrix {
+  width:100%;
+  min-width:710px;
+  border-collapse:collapse;
+}
+.matrix th {
+  text-align:left;
+  font-size:11px;
+  color:#78909b;
+  background:#f5f9fb;
+  letter-spacing:.5px;
+}
+.matrix td,.matrix th {
+  padding:17px 15px;
+  border-bottom:1px solid #e8eff2;
+}
+.matrix td small {
+  display:block;
+  margin-top:5px;
+  color:#8797a0;
+}
+.assignment {
+  min-width:125px;
+  border-radius:25px;
+  font-size:12px;
+  font-weight:700;
+  padding:10px;
+  cursor:pointer;
+}
+.assigned {
+  background:#e3f3ea;
+  color:#157451;
+}
+.notAssigned {
+  background:#edf1f4;
+  color:#597080;
+}
+.assignment:disabled {
+  opacity:.7;
+  cursor:not-allowed;
+}
+.updateCell {
+  font-size:12px;
+  color:#748a98;
+}
+.note {
+  color:#768996;
+  font-size:12px;
+  line-height:1.7;
+  margin:18px 0 0;
+}
+.auditList {margin-top:20px}
+.auditItem {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:15px 0;
+  border-bottom:1px solid #e8eff2;
+  font-size:12px;
+}
+.auditItem span:last-child {
+  margin-left:auto;
+  color:#778b98;
+}
+.auditAllowed,.auditDenied {
+  font-size:10px;
+  border-radius:22px;
+  padding:7px 10px;
+  font-weight:800;
+}
+.auditAllowed {
+  color:#177b58;
+  background:#e6f5ed;
+}
+.auditDenied {
+  color:#b6474c;
+  background:#fbeaea;
+}
+.error,.success {
+  margin:16px 0;
+  border-radius:10px;
+  padding:14px 17px;
+  font-size:13px;
+}
+.error {background:#fff0f0;color:#a82b37}
+.success {background:#e7f6ed;color:#15744f}
+@media(max-width:700px) {
+  .page {padding:0 13px 50px}
+  .nodeGrid {grid-template-columns:1fr}
+}
