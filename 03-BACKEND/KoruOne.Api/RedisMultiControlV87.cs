@@ -33,12 +33,17 @@ public static class RedisMultiControlV87
     private static string Subject(ClaimsPrincipal u) => Auth.UserId(u);
     private static string Actor(ClaimsPrincipal u) => u.FindFirst("preferred_username")?.Value ?? u.Identity?.Name ?? Subject(u);
     private static bool Admin(ClaimsPrincipal u) => Auth.Has(u, "admin");
-    private static bool Operator(ClaimsPrincipal u) => Auth.Has(u,"redis-operator");
+    private static bool Operator(ClaimsPrincipal u) =>
+        Auth.Has(u,"redis-operator","redis");
+    private static bool Viewer(ClaimsPrincipal u) =>
+        Auth.Has(u,"redis-viewer","redis-observer");
     private static bool Allow(ClaimsPrincipal u,string dept) =>
         Admin(u) || Operator(u) ||
         (dept=="network" && Auth.Has(u,"network")) ||
         (dept=="it" && Auth.Has(u,"it"));
-    private static bool MaySee(ClaimsPrincipal u, V87Node node) => Admin(u) || Operator(u) || node.Departments.Any(d=>Allow(u,d));
+    private static bool MaySee(ClaimsPrincipal u, V87Node node) =>
+        Admin(u) || Operator(u) || Viewer(u) ||
+        node.Departments.Any(d=>Allow(u,d));
     private static bool LocalAdmin(WebApplication app) => app.Environment.IsDevelopment() && Environment.GetEnvironmentVariable("KORU_ALLOW_LOCAL_DOCKER_ADMIN") == "1";
     private static JsonDocument RegistryDocument() => JsonDocument.Parse(File.Exists(Path.Combine(Home, "registry.json"))
         ? File.ReadAllText(Path.Combine(Home,"registry.json")) : "{}");
@@ -125,7 +130,9 @@ public static class RedisMultiControlV87
     }
     private static bool SafeNode(string s) => Regex.IsMatch(s, @"^redis(0[1-9]|[1-9][0-9])$");
     private static bool SafeKey(string s) => !string.IsNullOrWhiteSpace(s) && s.Length <= 120 && Regex.IsMatch(s,@"^[a-zA-Z0-9:_./-]+$");
-    private static bool GoodRole(ClaimsPrincipal user) => Admin(user) || Operator(user) || Auth.Has(user,"network","it");
+    private static bool GoodRole(ClaimsPrincipal user) =>
+        Admin(user) || Operator(user) || Viewer(user) ||
+        Auth.Has(user,"network","it");
     private static string Script(WebApplication app) => Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..","..","05-PLATFORM","redis-managed","koru_redisctl.py"));
     private static async Task<(bool ok,JsonElement result,string? error)> Control(WebApplication app, params string[] args)
     {
@@ -154,6 +161,39 @@ public static class RedisMultiControlV87
             return (false,default,"Local Redis operation timed out");
         }
     }
+    private static bool CanLogin(
+        ClaimsPrincipal user,V87Node node,string username)
+    {
+        if (!GoodRole(user) || !MaySee(user,node))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(username) ||
+            !Regex.IsMatch(username,@"^[a-zA-Z0-9_-]{1,48}$"))
+            return false;
+
+        // Admin, Redis Operator ve Viewer:
+        // Bu node'da gercekten tanimli ACL hesaplari.
+        if (Admin(user) || Operator(user) || Viewer(user))
+            return username=="koru_admin" ||
+                node.Departments.Contains(username);
+
+        // Departman rolleri farkli ACL hesaplarina gecemez.
+        if (Auth.Has(user,"network") &&
+            username=="network" &&
+            node.Departments.Contains("network"))
+            return true;
+
+        if (Auth.Has(user,"it") &&
+            username=="it" &&
+            node.Departments.Contains("it"))
+            return true;
+
+        return false;
+    }
+
+    private static bool ReadOnly(ClaimsPrincipal user) =>
+        Viewer(user) && !Admin(user) && !Operator(user);
+
     private static bool TrySession(
         HttpContext ctx, ClaimsPrincipal user,
         string id, out V87Session? result)
@@ -170,13 +210,10 @@ public static class RedisMultiControlV87
 
         var node=Node(id);
 
-        bool allowed=node!=null && MaySee(user,node) &&
+        bool allowed=node!=null &&
             session.Expires>DateTime.UtcNow &&
             session.Subject==Subject(user) &&
-            (session.Username=="koru_admin"
-                ? Admin(user)||Operator(user)
-                : node!.Departments.Contains(session.Username) &&
-                  Allow(user,session.Username));
+            CanLogin(user,node,session.Username);
 
         string? current=null;
 
@@ -324,13 +361,7 @@ public static class RedisMultiControlV87
             var node=Node(id);
 
             bool eligible=node!=null &&
-                GoodRole(user) && MaySee(user,node) &&
-                (input.Username=="koru_admin"
-                    ? Admin(user)||Operator(user)
-                    : (input.Username=="network" ||
-                       input.Username=="it") &&
-                      node!.Departments.Contains(input.Username) &&
-                      Allow(user,input.Username));
+                CanLogin(user,node,input.Username);
 
             if(!eligible ||
                string.IsNullOrWhiteSpace(input.Password) ||
@@ -396,6 +427,61 @@ public static class RedisMultiControlV87
         });
         // Redis key islemleri yalnizca dogrulanmis ACL oturumu
         // ve yetkili namespace uzerinden calisir.
+        group.MapPost("/nodes/{id}/key/meta",async (
+            string id,V87Key input,
+            ClaimsPrincipal user,HttpContext ctx) =>
+        {
+            if(!TrySession(ctx,user,id,out var session))
+                return Results.Unauthorized();
+
+            var key=ScopedKey(session!.Username,input.Name);
+
+            if(key==null)
+                return Results.BadRequest(new {
+                    message="Key namespace denied"
+                });
+
+            try
+            {
+                using var connection=await Connect(
+                    Node(id)!,"koru_admin",AdminPassword(id)!);
+
+                var db=connection.GetDatabase();
+                var exists=await db.KeyExistsAsync(key);
+
+                if(!exists)
+                    return Results.Ok(new {
+                        exists=false,
+                        type="NONE",
+                        ttlSeconds=(long?)null,
+                        persistent=false
+                    });
+
+                var type=await db.KeyTypeAsync(key);
+                var ttl=await db.KeyTimeToLiveAsync(key);
+
+                await Audit(user,id,session.Username,
+                    "key.inspect","success");
+
+                return Results.Ok(new {
+                    exists=true,
+                    type=type.ToString().ToUpperInvariant(),
+                    ttlSeconds=ttl.HasValue
+                        ? (long?)Math.Ceiling(ttl.Value.TotalSeconds)
+                        : null,
+                    persistent=!ttl.HasValue
+                });
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine(
+                    "[V892 META] "+ex.GetType().Name);
+                return Results.Problem(
+                    "Key metadata unavailable",
+                    statusCode:503);
+            }
+        });
+
         group.MapPost("/nodes/{id}/key/read",async (
             string id,V87Key input,
             ClaimsPrincipal user,HttpContext ctx) =>
@@ -446,6 +532,7 @@ public static class RedisMultiControlV87
             string id,V87Set input,
             ClaimsPrincipal user,HttpContext ctx) =>
         {
+            if(ReadOnly(user)) return Results.Forbid();
             if(!TrySession(ctx,user,id,out var session))
                 return Results.Unauthorized();
 
@@ -455,7 +542,7 @@ public static class RedisMultiControlV87
             if(key==null ||
                input.Value==null ||
                input.Value.Length>4096 ||
-               input.TtlSeconds<30 ||
+               input.TtlSeconds<0 ||
                input.TtlSeconds>86400)
                 return Results.BadRequest(new {
                     message="Invalid key, TTL or value"
@@ -466,10 +553,14 @@ public static class RedisMultiControlV87
                 using var conn=await Connect(
                     Node(id)!,"koru_admin",AdminPassword(id)!);
 
-                var result=await conn.GetDatabase().ExecuteAsync(
-                    "SET",(RedisKey)key,
-                    (RedisValue)input.Value,
-                    "EX",input.TtlSeconds);
+                var result=input.TtlSeconds==0
+                    ? await conn.GetDatabase().ExecuteAsync(
+                        "SET",(RedisKey)key,
+                        (RedisValue)input.Value)
+                    : await conn.GetDatabase().ExecuteAsync(
+                        "SET",(RedisKey)key,
+                        (RedisValue)input.Value,
+                        "EX",input.TtlSeconds);
 
                 if(result.ToString()!="OK")
                     throw new InvalidOperationException(
@@ -499,6 +590,7 @@ public static class RedisMultiControlV87
             string id,V87Key input,
             ClaimsPrincipal user,HttpContext ctx) =>
         {
+            if(ReadOnly(user)) return Results.Forbid();
             if(!TrySession(ctx,user,id,out var session))
                 return Results.Unauthorized();
 
@@ -536,6 +628,54 @@ public static class RedisMultiControlV87
                     "Redis delete unavailable",statusCode:503);
             }
         });
+        group.MapPost("/nodes/{id}/key/persist",async (
+            string id,V87Key input,
+            ClaimsPrincipal user,HttpContext ctx) =>
+        {
+            if(ReadOnly(user)) return Results.Forbid();
+
+            if(!TrySession(ctx,user,id,out var session))
+                return Results.Unauthorized();
+
+            string? key=ScopedKey(
+                session!.Username,input.Name);
+
+            if(key==null)
+                return Results.BadRequest(
+                    new {message="Key namespace denied"});
+
+            try
+            {
+                using var conn=await Connect(
+                    Node(id)!,"koru_admin",AdminPassword(id)!);
+
+                var db=conn.GetDatabase();
+                bool exists=await db.KeyExistsAsync(key);
+                if(!exists)
+                    return Results.NotFound(
+                        new {message="Key bulunamadi veya suresi doldu"});
+
+                bool changed=await db.KeyPersistAsync(key);
+
+                await Audit(
+                    user,id,session.Username,"key.persist",
+                    changed?"success":"already-persistent");
+
+                return Results.Ok(new {
+                    key,
+                    persistent=true,
+                    changed
+                });
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine(
+                    "[V891 PERSIST] "+ex.GetType().Name);
+                return Results.Problem(
+                    "Redis persist unavailable",statusCode:503);
+            }
+        });
+
         group.MapPost("/nodes",async (V87Create input,ClaimsPrincipal u) =>
         {
             if (!Admin(u)) return Results.Forbid();

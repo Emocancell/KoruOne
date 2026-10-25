@@ -7,6 +7,13 @@ type Node = {
   id:string;port:number;memoryMb:number;departments:string[];
   connected:boolean;usedBytes:number;keyCount:number;hits:number;misses:number;
 };
+// V892_KEY_INSPECTOR
+type KeyMeta = {
+  exists:boolean;
+  type:string;
+  ttlSeconds:number|null;
+  persistent:boolean;
+};
 type Audit = {at:string;actor:string;node:string;department:string;action:string;outcome:string};
 type Snapshot = {nodes:Node[];canProvision:boolean;measuredAt:string};
 type Unlocked = {node:string;session:string;department:string};
@@ -31,8 +38,9 @@ export default function MultiRedisManagerV87(){
   const [keys,setKeys]=useState<string[]>([]);
   const [keyName,setKeyName]=useState("demo:sample");
   const [keyValue,setKeyValue]=useState("KORU ONE cache test");
-  const [ttl,setTtl]=useState(300);
+  const [ttl,setTtl]=useState(0);
   const [keyRead,setKeyRead]=useState("");
+  const [keyMeta,setKeyMeta]=useState<KeyMeta|null>(null);
   const [newId,setNewId]=useState("redis04");
   const [newPort,setNewPort]=useState(3004);
   const [newMemory,setNewMemory]=useState(256);
@@ -84,7 +92,10 @@ export default function MultiRedisManagerV87(){
 
   const aclUser=
     roles.includes("admin")||
-    roles.includes("redis-operator")
+    roles.includes("redis-operator")||
+    roles.includes("redis")||
+    roles.includes("redis-viewer")||
+    roles.includes("redis-observer")
       ? "koru_admin"
       : roles.includes("network")
         ? "network"
@@ -95,6 +106,10 @@ export default function MultiRedisManagerV87(){
   useEffect(()=>{
     setUsername(aclUser);
   },[aclUser]);
+
+  const viewOnly=
+    !roles.some(r=>["admin","redis-operator","redis"].includes(r)) &&
+    roles.some(r=>["redis-viewer","redis-observer"].includes(r));
 
   const call=useCallback(async (path:string,method="GET",body?:unknown,redisSession?:string)=>{
     const response=await fetch("/api/v8/redis/multi"+path,{method,headers:{Authorization:`Bearer ${token}`, ...(body!==undefined?{"Content-Type":"application/json"}:{}),...(redisSession?{"X-Koru-Redis-Session":redisSession}:{})},body:body!==undefined?JSON.stringify(body):undefined,cache:"no-store"});
@@ -117,6 +132,8 @@ export default function MultiRedisManagerV87(){
   useEffect(()=>{
     setUnlocked(null);
     setKeys([]);
+    setKeyMeta(null);
+    setKeyRead("");
     setSecret(null);
     setPassword("");
   },[selected]);
@@ -138,6 +155,47 @@ export default function MultiRedisManagerV87(){
     setUnlocked(null);await refresh();
   }
   async function keyList(){if(!unlocked)return;const result=await call(`/nodes/${unlocked.node}/keys`,"GET",undefined,unlocked.session) as {keys:string[]};setKeys(result.keys);}
+  async function inspectKey(name:string) {
+    if(!unlocked)return;
+
+    const info=await call(
+      `/nodes/${unlocked.node}/key/meta`,
+      "POST",
+      {name},
+      unlocked.session
+    ) as KeyMeta;
+
+    setKeyMeta(info);
+  }
+
+  useEffect(()=>{
+    if(!token||!unlocked?.session)return;
+
+    let active=true;
+
+    const timer=window.setInterval(()=>{
+      if(document.visibilityState!=="visible")return;
+
+      void call(
+        `/nodes/${unlocked.node}/keys`,
+        "GET",
+        undefined,
+        unlocked.session
+      ).then(result=>{
+        if(active){
+          setKeys((result as {keys:string[]}).keys);
+        }
+      }).catch(()=>{
+        // Gecici ag hatasinda onceki liste korunur.
+      });
+    },20000);
+
+    return ()=>{
+      active=false;
+      window.clearInterval(timer);
+    };
+  },[token,unlocked?.node,unlocked?.session,call]);
+
   return (
     <section style={{...panel,marginTop:20,color:ink}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:14,flexWrap:"wrap"}}>
@@ -235,8 +293,15 @@ export default function MultiRedisManagerV87(){
           <input
             style={{...field,marginTop:6}}
             value={username}
-            readOnly
-            placeholder="Yetkili ACL kullanicisi"
+            onChange={e=>{
+              setUsername(e.target.value.trim().toLowerCase());
+              setUnlocked(null);
+              setKeys([]);
+              setKeyRead("");
+            }}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="koru_admin, hr, marketing, network, it..."
             aria-label="ACL kullanici"
           />
           <label style={{fontSize:12,display:"block",marginTop:11}}>Redis şifresi</label>
@@ -252,7 +317,7 @@ export default function MultiRedisManagerV87(){
           <p style={{fontSize:12,color:sub}}>Şifreyle bağlanınca erişebildiğin namespace altında gerçek Redis key ekle / oku / sil.</p>
           <div className="koru-v88-browser">
             <aside className="koru-v88-keylist">
-              <div className="koru-v88-paneheading">Key Browser <span>{keys.length} key</span></div>
+              <div className="koru-v88-paneheading">Key Browser <span>{keys.length} key · 20 sn</span></div>
               <button disabled={!unlocked||busy} style={soft} onClick={()=>void run(keyList)}>Key'leri Yenile (max 60)</button>
               <div className="koru-v88-keyrows">
                 {keys.length===0&&<p style={{color:sub,fontSize:12}}>Giriş sonrası key'leri listele. Key yoksa sağdan yeni kayıt ekle.</p>}
@@ -271,16 +336,81 @@ export default function MultiRedisManagerV87(){
             <div className="koru-v88-keydetail">
               <div className="koru-v88-paneheading">Key Editor <span>String · ACL kontrollü</span></div>
           <label style={{fontSize:12,display:"block",marginTop:10}}>Key adı {unlocked?.department!=="koru_admin"&&"(departman prefix'i otomatik eklenir)"}</label>
-          <input style={{...field,marginTop:5}} value={keyName} onChange={e=>setKeyName(e.target.value)} />
+          <input style={{...field,marginTop:5}} value={keyName}
+            onChange={e=>{
+              setKeyName(e.target.value);
+              setKeyMeta(null);
+            }} />
           <label style={{fontSize:12,display:"block",marginTop:9}}>String değeri</label>
-          <textarea style={{...field,marginTop:5,minHeight:65}} value={keyValue} onChange={e=>setKeyValue(e.target.value)} />
-          <label style={{fontSize:12,display:"block",marginTop:9}}>TTL (saniye)</label>
-          <input type="number" style={{...field,marginTop:5}} value={ttl} min={30} max={86400} onChange={e=>setTtl(Number(e.target.value))}/>
-          <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:12}}>
-            <button style={action} disabled={!unlocked||busy} onClick={()=>void run(async()=>{await call(`/nodes/${selected}/key/set`,"POST",{name:keyName,value:keyValue,ttlSeconds:ttl},unlocked!.session);setStatus("Key yazıldı · audit kaydedildi");await keyList();await refresh();})}>Key Ekle / Güncelle</button>
-            <button style={soft} disabled={!unlocked||busy} onClick={()=>void run(async()=>{const r=await call(`/nodes/${selected}/key/read`,"POST",{name:keyName},unlocked!.session) as {value:string|null};setKeyRead(r.value??"Key bulunamadı");})}>Oku</button>
-            <button style={{...action,background:"#a94450"}} disabled={!unlocked||busy} onClick={()=>{if(window.confirm("Bu key silinsin mi?"))void run(async()=>{await call(`/nodes/${selected}/key/delete`,"POST",{name:keyName},unlocked!.session);setStatus("Key silme işlemi tamamlandı");await keyList();await refresh();});}}>Sil</button>
+          <textarea style={{...field,marginTop:5,minHeight:65}} value={keyValue} readOnly={viewOnly} onChange={e=>setKeyValue(e.target.value)} />
+          <label style={{fontSize:12,display:"block",marginTop:9}}>
+            TTL (saniye · 0 = süresiz / kalıcı)
+          </label>
+          <input type="number" style={{...field,marginTop:5}}
+            value={ttl} min={0} max={86400}
+            disabled={viewOnly}
+            onChange={e=>setTtl(Number(e.target.value))}/>
+          <div style={{color:sub,fontSize:12,marginTop:5}}>
+            0 seçildiğinde Redis key'e son kullanma tarihi koymaz.
           </div>
+          <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:12}}>
+            <button style={action} disabled={!unlocked||busy||viewOnly} onClick={()=>void run(async()=>{await call(`/nodes/${selected}/key/set`,"POST",{name:keyName,value:keyValue,ttlSeconds:ttl},unlocked!.session);setStatus("Key yazıldı · audit kaydedildi");await keyList();await refresh();})}>Key Ekle / Güncelle</button>
+            <button style={soft} disabled={!unlocked||busy} onClick={()=>void run(async()=>{const r=await call(`/nodes/${selected}/key/read`,"POST",{name:keyName},unlocked!.session) as {value:string|null};setKeyRead(r.value??"Key bulunamadı");})}>Oku</button>
+            <button style={{...action,background:"#a94450"}} disabled={!unlocked||busy||viewOnly} onClick={()=>{if(window.confirm("Bu key silinsin mi?"))void run(async()=>{await call(`/nodes/${selected}/key/delete`,"POST",{name:keyName},unlocked!.session);setStatus("Key silme işlemi tamamlandı");await keyList();await refresh();});}}>Sil</button>
+          </div>
+          {!viewOnly&&
+            <button
+              type="button"
+              style={{...soft,marginTop:10}}
+              disabled={!unlocked||busy}
+              onClick={()=>void run(async()=>{
+                const r=await call(
+                  `/nodes/${selected}/key/persist`,
+                  "POST",
+                  {name:keyName},
+                  unlocked!.session
+                ) as {persistent:boolean;changed:boolean};
+
+                setStatus(r.changed
+                  ? "Key kalıcı hale getirildi; TTL kaldırıldı."
+                  : "Bu key zaten kalıcıydı.");
+              })}
+            >
+              Seçili Key'i Kalıcı Yap
+            </button>}
+          <div style={{marginTop:12}}>
+            <button
+              type="button"
+              style={soft}
+              disabled={!unlocked||busy||!keyName}
+              onClick={()=>void run(()=>inspectKey(keyName))}
+            >
+              Key Türü / TTL Kontrol Et
+            </button>
+          </div>
+
+          {keyMeta&&
+            <div role="status" style={{
+              marginTop:10,
+              padding:12,
+              background:"#f2f8f5",
+              border:"1px solid #d6e9df",
+              borderRadius:10,
+              fontSize:13,
+              color:ink
+            }}>
+              {!keyMeta.exists
+                ? "Key bulunamadı veya süresi doldu"
+                : <>
+                    <strong>{keyMeta.type}</strong>
+                    {" · "}
+                    {keyMeta.persistent
+                      ? "Kalıcı · TTL yok"
+                      : `Kalan TTL: ${keyMeta.ttlSeconds ?? 0} saniye`}
+                  </>
+              }
+            </div>}
+
           {keyRead&&<pre className="koru-v88-value">{(()=>{try{return JSON.stringify(JSON.parse(keyRead),null,2);}catch{return keyRead;}})()}</pre>}
             </div>
           </div>

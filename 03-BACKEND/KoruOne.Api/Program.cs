@@ -108,8 +108,11 @@ app.MapRedisDepartmentAccessV8();
 app.MapRedisNodeRegistryV82();
 app.MapRedisUserAccessV83();
 app.MapRedisStorageV84();
+app.MapRedisStorageReality();
 app.MapRedisOpsV85();
 app.MapRedisMonitoringV86();
+app.MapRedisMultiControlV87();
+app.MapRedisStorageLiveV89();
 app.Run();
 
 record DepartmentInput(string Name);record TicketInput(string Title,string Department);record StatusInput(string Status);record SalaryInput(decimal Amount);record ProductInput(string Name,decimal Price);record PriceInput(decimal Price);record AdInput(string Title,string Content);
