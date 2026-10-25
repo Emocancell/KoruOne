@@ -108,3 +108,34 @@ Gerçek çalışan, maaş, müşteri veya kurumsal erişim bilgilerini geliştir
 ## 9. Proje referansı
 
 Temel gereksinimler: `redis-vs-redis-enterprise-calisma(5).md`. Redis OSS ve Redis Enterprise'ın aynı özellik düzeyinde olduğu varsayılmaz; ürünün amacı seçilmiş kurumsal yönetim yeteneklerini kontrollü biçimde geliştirmektir.
+=============================================
+  REDIS01 - ACL HESAPLARI
+=============================================
+  Kullanici : koru_admin
+  Sifre     : sM1WexIhZls-WVjmwENJBCQHitnkj8Y0ZBMBIK5alJ-jH7GL
+---------------------------------------------
+  Kullanici : hr
+  Sifre     : sEg_SlI23p_gFP85zmL5P0SLX44viNRdxaD5Ci-p3p7_v4JF
+---------------------------------------------
+  Kullanici : marketing
+  Sifre     : ffmw67BKaKB7emqCbBaTStjGhccwBxwWg4PHEJNs1f6zqcyK
+---------------------------------------------
+
+=============================================
+  REDIS02 - ACL HESAPLARI
+=============================================
+  Kullanici : koru_admin
+  Sifre     : oj9qqJ1s7kK0vRZWJcMqL_WvBypzNyBryJpyeqbpPrEBmbqR
+---------------------------------------------
+  Kullanici : it
+  Sifre     : cWkS6nPDTJDlrWM4ovUg3S4xjNtkU0kZb68vBN840t8yIgxs
+---------------------------------------------
+
+=============================================
+  REDIS03 - ACL HESAPLARI
+=============================================
+  Kullanici : koru_admin
+  Sifre     : gdBan9xRiqfGBbY93loyP5m1NYcFWePpTfRxwx3-SOEwm-Hx
+---------------------------------------------
+  Kullanici : network
+  Sifre     : rvo1AWNeoYjjD3A7hu_sOP-DHzbq0jAAIRmpKyW7T30fVOwD
