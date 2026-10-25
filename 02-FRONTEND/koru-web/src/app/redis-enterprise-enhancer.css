@@ -1,0 +1,564 @@
+/* =========================================================
+   KORU ONE - Redis Enterprise Enhancer UI
+   Sadece görünüm iyileştirmesi
+   ========================================================= */
+
+:root {
+  --koru-bg: #f5f8f6;
+  --koru-surface: #ffffff;
+  --koru-surface-soft: #f8fbf9;
+  --koru-border: #d8e6dc;
+  --koru-border-strong: #b8d2c0;
+  --koru-text: #123126;
+  --koru-text-soft: #5c7568;
+  --koru-title: #0f2d23;
+  --koru-green: #1f7a53;
+  --koru-green-2: #2d8a62;
+  --koru-green-soft: #e7f4ec;
+  --koru-green-soft-2: #eff8f3;
+  --koru-danger: #c74f5e;
+  --koru-danger-soft: #fff1f2;
+  --koru-warning: #a26a10;
+  --koru-warning-soft: #fff7e6;
+  --koru-shadow: 0 8px 24px rgba(20, 48, 36, 0.08);
+  --koru-radius-xl: 22px;
+  --koru-radius-lg: 18px;
+  --koru-radius-md: 14px;
+  --koru-radius-sm: 10px;
+}
+
+/* Ana gövde */
+.koru-redis-enterprise-shell,
+.koru-redis-enterprise-shell * {
+  box-sizing: border-box;
+}
+
+.koru-redis-enterprise-shell {
+  color: var(--koru-text);
+  background: transparent;
+}
+
+/* Başlıklar */
+.koru-redis-enterprise-shell h1,
+.koru-redis-enterprise-shell h2,
+.koru-redis-enterprise-shell h3,
+.koru-redis-enterprise-shell h4 {
+  color: var(--koru-title) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+
+.koru-redis-enterprise-shell h1 {
+  font-size: 2.2rem !important;
+  line-height: 1.08;
+  margin-bottom: 10px;
+}
+
+.koru-redis-enterprise-shell h2 {
+  font-size: 1.55rem !important;
+  margin-bottom: 12px;
+}
+
+.koru-redis-enterprise-shell h3 {
+  font-size: 1.18rem !important;
+  margin-bottom: 10px;
+}
+
+.koru-redis-enterprise-shell p,
+.koru-redis-enterprise-shell span,
+.koru-redis-enterprise-shell div,
+.koru-redis-enterprise-shell small,
+.koru-redis-enterprise-shell li,
+.koru-redis-enterprise-shell label {
+  color: var(--koru-text);
+}
+
+/* Soluk / açıklama yazıları */
+.koru-redis-enterprise-shell .koru-redis-muted,
+.koru-redis-enterprise-shell .koru-muted,
+.koru-redis-enterprise-shell .koru-subtext,
+.koru-redis-enterprise-shell .koru-caption,
+.koru-redis-enterprise-shell small {
+  color: var(--koru-text-soft) !important;
+}
+
+/* Genel kart */
+.koru-redis-enterprise-shell .koru-redis-card,
+.koru-redis-enterprise-shell .koru-redis-panel,
+.koru-redis-enterprise-shell .koru-redis-block,
+.koru-redis-enterprise-shell .koru-redis-section,
+.koru-redis-enterprise-shell .koru-redis-node-card,
+.koru-redis-enterprise-shell .koru-redis-form-card,
+.koru-redis-enterprise-shell .koru-redis-metric-card,
+.koru-redis-enterprise-shell .koru-redis-explorer-card {
+  background: var(--koru-surface) !important;
+  border: 1px solid var(--koru-border) !important;
+  border-radius: var(--koru-radius-lg) !important;
+  box-shadow: var(--koru-shadow);
+  padding: 18px 18px !important;
+}
+
+/* Üst alan */
+.koru-redis-enterprise-shell .koru-redis-hero,
+.koru-redis-enterprise-shell .koru-redis-header {
+  background: linear-gradient(180deg, #fbfefd 0%, #f4f9f6 100%) !important;
+  border: 1px solid var(--koru-border);
+  border-radius: 24px;
+  box-shadow: var(--koru-shadow);
+  padding: 22px 22px 18px;
+  margin-bottom: 18px;
+}
+
+/* Üst node kartları */
+.koru-redis-enterprise-shell .koru-redis-node-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+  margin-bottom: 14px;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-card {
+  position: relative;
+  padding: 18px !important;
+  min-height: 136px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfefd 100%) !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(31, 122, 83, 0.03);
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-card.is-active,
+.koru-redis-enterprise-shell .koru-redis-node-card.is-selected {
+  border: 1.5px solid var(--koru-green) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f0faf4 100%) !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-card h3,
+.koru-redis-enterprise-shell .koru-redis-node-card strong,
+.koru-redis-enterprise-shell .koru-redis-node-card b {
+  color: var(--koru-title) !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-card .endpoint,
+.koru-redis-enterprise-shell .koru-redis-node-card .meta,
+.koru-redis-enterprise-shell .koru-redis-node-card .desc {
+  color: var(--koru-text-soft) !important;
+  font-size: 0.93rem;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-status,
+.koru-redis-enterprise-shell .koru-status-connected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--koru-green) !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-status::before,
+.koru-redis-enterprise-shell .koru-status-connected::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--koru-green);
+  box-shadow: 0 0 0 4px rgba(31, 122, 83, 0.12);
+}
+
+/* İki kolon alan */
+.koru-redis-enterprise-shell .koru-redis-two-col,
+.koru-redis-enterprise-shell .koru-redis-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* Formlar */
+.koru-redis-enterprise-shell input,
+.koru-redis-enterprise-shell select,
+.koru-redis-enterprise-shell textarea {
+  width: 100%;
+  background: #fff !important;
+  color: var(--koru-text) !important;
+  border: 1px solid var(--koru-border-strong) !important;
+  border-radius: 12px !important;
+  min-height: 46px;
+  padding: 12px 14px !important;
+  outline: none;
+  box-shadow: none !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.koru-redis-enterprise-shell textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.koru-redis-enterprise-shell input:focus,
+.koru-redis-enterprise-shell select:focus,
+.koru-redis-enterprise-shell textarea:focus {
+  border-color: var(--koru-green) !important;
+  box-shadow: 0 0 0 4px rgba(31, 122, 83, 0.14) !important;
+  background: #fff !important;
+}
+
+.koru-redis-enterprise-shell label {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--koru-title) !important;
+  margin-bottom: 8px;
+}
+
+/* Butonlar */
+.koru-redis-enterprise-shell button,
+.koru-redis-enterprise-shell .btn,
+.koru-redis-enterprise-shell a.koru-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 10px 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.koru-redis-enterprise-shell button:hover,
+.koru-redis-enterprise-shell .btn:hover,
+.koru-redis-enterprise-shell a.koru-btn:hover {
+  transform: translateY(-1px);
+}
+
+.koru-redis-enterprise-shell .koru-btn-primary,
+.koru-redis-enterprise-shell button.primary,
+.koru-redis-enterprise-shell .btn-primary {
+  background: var(--koru-green) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(31, 122, 83, 0.18);
+}
+
+.koru-redis-enterprise-shell .koru-btn-primary:hover,
+.koru-redis-enterprise-shell button.primary:hover,
+.koru-redis-enterprise-shell .btn-primary:hover {
+  background: var(--koru-green-2) !important;
+}
+
+.koru-redis-enterprise-shell .koru-btn-secondary,
+.koru-redis-enterprise-shell button.secondary,
+.koru-redis-enterprise-shell .btn-secondary {
+  background: var(--koru-green-soft-2) !important;
+  color: var(--koru-green) !important;
+  border-color: var(--koru-border) !important;
+}
+
+.koru-redis-enterprise-shell .koru-btn-danger,
+.koru-redis-enterprise-shell button.danger,
+.koru-redis-enterprise-shell .btn-danger {
+  background: var(--koru-danger-soft) !important;
+  color: var(--koru-danger) !important;
+  border-color: #f0c8ce !important;
+}
+
+.koru-redis-enterprise-shell .koru-btn-ghost,
+.koru-redis-enterprise-shell button.ghost {
+  background: #fff !important;
+  color: var(--koru-title) !important;
+  border-color: var(--koru-border) !important;
+}
+
+/* Uyarı alanı */
+.koru-redis-enterprise-shell .koru-redis-warning,
+.koru-redis-enterprise-shell .koru-warning,
+.koru-redis-enterprise-shell .warning-box {
+  background: var(--koru-warning-soft) !important;
+  border: 1px solid #eed9a7 !important;
+  color: var(--koru-warning) !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  font-weight: 700;
+  box-shadow: none !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-warning *,
+.koru-redis-enterprise-shell .koru-warning *,
+.koru-redis-enterprise-shell .warning-box * {
+  color: var(--koru-warning) !important;
+}
+
+/* Progress ve usage */
+.koru-redis-enterprise-shell .koru-redis-progress,
+.koru-redis-enterprise-shell .koru-progress,
+.koru-redis-enterprise-shell progress {
+  width: 100%;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eaf1ed !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-progress-bar,
+.koru-redis-enterprise-shell .koru-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2d8a62 0%, #4bab82 100%) !important;
+}
+
+/* Key-value alanı */
+.koru-redis-enterprise-shell .koru-redis-kv-list,
+.koru-redis-enterprise-shell .koru-key-list,
+.koru-redis-enterprise-shell .koru-json-viewer,
+.koru-redis-enterprise-shell .koru-redis-console {
+  background: #fbfefd !important;
+  border: 1px solid var(--koru-border) !important;
+  border-radius: 14px !important;
+  padding: 12px !important;
+}
+
+/* Footer not */
+.koru-redis-enterprise-shell .koru-redis-footnote,
+.koru-redis-enterprise-shell .koru-footnote {
+  color: var(--koru-text-soft) !important;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-top: 14px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .koru-redis-enterprise-shell .koru-redis-node-grid,
+  .koru-redis-enterprise-shell .koru-redis-two-col,
+  .koru-redis-enterprise-shell .koru-redis-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .koru-redis-enterprise-shell h1 {
+    font-size: 1.7rem !important;
+  }
+
+  .koru-redis-enterprise-shell .koru-redis-card,
+  .koru-redis-enterprise-shell .koru-redis-panel,
+  .koru-redis-enterprise-shell .koru-redis-block,
+  .koru-redis-enterprise-shell .koru-redis-section,
+  .koru-redis-enterprise-shell .koru-redis-node-card,
+  .koru-redis-enterprise-shell .koru-redis-form-card,
+  .koru-redis-enterprise-shell .koru-redis-metric-card,
+  .koru-redis-enterprise-shell .koru-redis-explorer-card {
+    padding: 14px !important;
+  }
+}
+
+/* =========================================================
+   V8.8 - Multi Redis Enterprise Layout Override
+   ========================================================= */
+
+.koru-redis-enterprise-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+
+/* Header */
+.koru-redis-enterprise-shell .koru-redis-header,
+.koru-redis-enterprise-shell .koru-redis-hero {
+  margin-bottom: 16px;
+}
+
+/* Hero actions sağa düzgün dizilsin */
+.koru-redis-enterprise-shell .koru-redis-header-actions,
+.koru-redis-enterprise-shell .koru-toolbar,
+.koru-redis-enterprise-shell .koru-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Node kartlar yatay ve dengeli */
+.koru-redis-enterprise-shell .koru-redis-node-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(280px, 1fr)) !important;
+  gap: 14px !important;
+  margin: 14px 0 18px !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-node-card {
+  min-height: 128px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Ana orta alan: solda login, sağda explorer */
+.koru-redis-enterprise-shell .koru-redis-main-grid,
+.koru-redis-enterprise-shell .koru-redis-two-col {
+  display: grid !important;
+  grid-template-columns: minmax(340px, 0.9fr) minmax(520px, 1.3fr) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-form-card,
+.koru-redis-enterprise-shell .koru-redis-explorer-card {
+  min-height: 430px;
+}
+
+/* Keyspace explorer içi daha premium */
+.koru-redis-enterprise-shell .koru-redis-explorer-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.koru-redis-enterprise-shell .koru-redis-explorer-card textarea {
+  min-height: 112px !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-explorer-card .koru-inline-actions,
+.koru-redis-enterprise-shell .koru-redis-explorer-card .koru-row-actions,
+.koru-redis-enterprise-shell .koru-redis-explorer-card .koru-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Ustteki status / metric alanlari */
+.koru-redis-enterprise-shell .koru-redis-stat-grid,
+.koru-redis-enterprise-shell .koru-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(180px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.koru-redis-enterprise-shell .koru-redis-metric-card strong,
+.koru-redis-enterprise-shell .koru-redis-metric-card b,
+.koru-redis-enterprise-shell .koru-stat-value {
+  font-size: 1.8rem !important;
+  line-height: 1.1;
+  color: var(--koru-title) !important;
+}
+
+/* Storage allocation satirlari */
+.koru-redis-enterprise-shell .koru-storage-allocation-list,
+.koru-redis-enterprise-shell .koru-storage-list {
+  display: grid;
+  gap: 12px;
+}
+
+.koru-redis-enterprise-shell .koru-storage-item,
+.koru-redis-enterprise-shell .koru-storage-row {
+  background: #fff !important;
+  border: 1px solid var(--koru-border) !important;
+  border-radius: 16px !important;
+  padding: 14px 16px !important;
+  box-shadow: 0 6px 18px rgba(20, 48, 36, 0.06);
+}
+
+/* Plan manager kartları daha düzenli */
+.koru-redis-enterprise-shell .koru-plan-grid,
+.koru-redis-enterprise-shell .koru-storage-plan-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(220px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.koru-redis-enterprise-shell .koru-plan-card,
+.koru-redis-enterprise-shell .koru-storage-plan-card {
+  background: #fff !important;
+  border: 1px solid var(--koru-border) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  min-height: 152px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.koru-redis-enterprise-shell .koru-plan-card .koru-plan-actions,
+.koru-redis-enterprise-shell .koru-storage-plan-card .koru-plan-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* Korkunç taşmaları azalt */
+.koru-redis-enterprise-shell .koru-redis-card,
+.koru-redis-enterprise-shell .koru-redis-panel,
+.koru-redis-enterprise-shell .koru-redis-block,
+.koru-redis-enterprise-shell .koru-redis-section {
+  overflow: hidden;
+}
+
+/* Yazılar daha okunur */
+.koru-redis-enterprise-shell h1 {
+  margin-bottom: 8px;
+}
+
+.koru-redis-enterprise-shell p {
+  line-height: 1.5;
+}
+
+/* Küçük badge / status */
+.koru-redis-enterprise-shell .koru-badge,
+.koru-redis-enterprise-shell .koru-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--koru-green-soft);
+  color: var(--koru-green) !important;
+  font-weight: 800;
+  border: 1px solid #cfe7d7;
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .koru-redis-enterprise-shell .koru-plan-grid,
+  .koru-redis-enterprise-shell .koru-storage-plan-grid {
+    grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
+  }
+
+  .koru-redis-enterprise-shell .koru-redis-stat-grid,
+  .koru-redis-enterprise-shell .koru-stats-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1080px) {
+  .koru-redis-enterprise-shell .koru-redis-node-grid,
+  .koru-redis-enterprise-shell .koru-redis-main-grid,
+  .koru-redis-enterprise-shell .koru-redis-two-col,
+  .koru-redis-enterprise-shell .koru-plan-grid,
+  .koru-redis-enterprise-shell .koru-storage-plan-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* KORU ONE V8.8: Gercek yatay Key Browser (mevcut yesil/beyaz palette) */
+.koru-v88-browser{display:grid;grid-template-columns:minmax(185px,.85fr) minmax(260px,1.15fr);gap:14px;margin-top:15px;align-items:stretch}
+.koru-v88-keylist,.koru-v88-keydetail{background:#fff;border:1px solid #dce7eb;border-radius:12px;padding:14px;min-width:0}
+.koru-v88-keylist{background:#f8fbfa}
+.koru-v88-paneheading{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:13px;color:#1b3545;font-size:14px;font-weight:750}
+.koru-v88-paneheading span{color:#6e8191;font-size:11px;font-weight:500}
+.koru-v88-keyrows{margin-top:12px;max-height:340px;overflow:auto;display:grid;align-content:start;gap:5px}
+.koru-v88-keyrow{background:#fff!important;border:1px solid #dce7eb!important;color:#1b3545!important;width:100%;text-align:left;display:flex;align-items:center;gap:8px;padding:9px!important;border-radius:8px!important;min-height:36px!important;font-size:12px!important;overflow-wrap:anywhere;cursor:pointer}
+.koru-v88-keyrow:hover,.koru-v88-keyrow:focus-visible{border-color:#158069!important;background:#edf7f1!important}
+.koru-v88-keytype{flex:none;background:#e4f2e9;color:#137451;font-size:10px;font-weight:750;border-radius:4px;padding:3px 5px}
+.koru-v88-value{color:#183d31;background:#f2f7f4;border:1px solid #dce7eb;padding:12px;border-radius:8px;font-size:12px;overflow:auto;max-height:210px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:1250px){.koru-v88-browser{grid-template-columns:1fr}}

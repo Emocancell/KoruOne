@@ -1,10 +1,13 @@
 "use client";
+import MultiRedisManagerV87 from "./MultiRedisManagerV87";
+
 
 import {
   useCallback, useEffect, useMemo, useState
 } from "react";
 import { UserManager } from "oidc-client-ts";
 import Link from "next/link";
+import RedisStorageReality from "./RedisStorageReality";
 
 type NodeMetric = {
   id: string;
@@ -573,9 +576,9 @@ export default function RedisStoragePage() {
 
       <div style={{...grid, marginTop: 25}}>
         {[
-          ["Redis Nodes", data
+          ["Legacy Redis Nodes", data
             ? `${active}/${data.nodes.length}` : "—",
-            "Aktif / görünür node"],
+            "Eski Cache + Streams · 6379/6380"],
           ["Physical RAM", data
             ? bytes(totalUsed) : "—",
             "Redis INFO used_memory"],
@@ -603,6 +606,9 @@ export default function RedisStoragePage() {
         ))}
       </div>
 
+      <MultiRedisManagerV87/>
+
+      <h2 style={{marginTop:28}}>Legacy Redis Storage (6379 / 6380)</h2>
       <section style={{...card, marginTop: 20}}>
         <h2>Physical Redis Capacity</h2>
         <p style={{color: palette.muted, fontSize: 13}}>
@@ -648,6 +654,8 @@ export default function RedisStoragePage() {
           ))}
         </div>
       </section>
+
+      {data?.isAdmin && <RedisStorageReality token={token} />}
 
       <section style={{...card, marginTop: 20}}>
         <h2>Department Storage Allocation</h2>
