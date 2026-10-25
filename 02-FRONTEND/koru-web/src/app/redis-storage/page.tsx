@@ -7,7 +7,7 @@ import {
 } from "react";
 import { UserManager } from "oidc-client-ts";
 import Link from "next/link";
-import RedisStorageReality from "./RedisStorageReality";
+import RedisStorageLiveV89 from "./RedisStorageLiveV89";
 
 type NodeMetric = {
   id: string;
@@ -655,7 +655,7 @@ export default function RedisStoragePage() {
         </div>
       </section>
 
-      {data?.isAdmin && <RedisStorageReality token={token} />}
+      {data?.isAdmin && <RedisStorageLiveV89 token={token} />}
 
       <section style={{...card, marginTop: 20}}>
         <h2>Department Storage Allocation</h2>
