@@ -2,6 +2,8 @@
 
 import {useCallback,useEffect,useState} from "react";
 import {UserManager} from "oidc-client-ts";
+import RedisDepartmentCapacityV895 from "./RedisDepartmentCapacityV895";
+import RedisCapacityBarV893 from "./RedisCapacityBarV893";
 
 type Node = {
   id:string;port:number;memoryMb:number;departments:string[];
@@ -113,6 +115,11 @@ export default function MultiRedisManagerV87(){
 
   const call=useCallback(async (path:string,method="GET",body?:unknown,redisSession?:string)=>{
     const response=await fetch("/api/v8/redis/multi"+path,{method,headers:{Authorization:`Bearer ${token}`, ...(body!==undefined?{"Content-Type":"application/json"}:{}),...(redisSession?{"X-Koru-Redis-Session":redisSession}:{})},body:body!==undefined?JSON.stringify(body):undefined,cache:"no-store"});
+    if(response.status===401){
+      throw Error(redisSession
+        ? "HTTP 401 · Redis ACL oturumu gecersiz. Yeniden sifreyle baglan."
+        : "HTTP 401 · Keycloak oturumu gecersiz veya suresi dolmus. Cikis yapip tekrar gir.");
+    }
     if(!response.ok){let detail="";try{const j=await response.json();detail=j.message||j.detail||"";}catch{}throw Error(`HTTP ${response.status}${detail?" · "+detail:""}`);}
     return response.json();
   },[token]);
@@ -129,6 +136,13 @@ export default function MultiRedisManagerV87(){
     }catch(e){setStatus("Redis listesi okunamadı: "+String(e));}
   },[token,call,unlocked?.session]);
   useEffect(()=>{void refresh();},[refresh]);
+  useEffect(()=>{
+    if(!unlocked?.session)return;
+    const interval=window.setInterval(()=>{
+      if(document.visibilityState==="visible")void refresh();
+    },15000);
+    return ()=>window.clearInterval(interval);
+  },[unlocked?.session,refresh]);
   useEffect(()=>{
     setUnlocked(null);
     setKeys([]);
@@ -152,7 +166,8 @@ export default function MultiRedisManagerV87(){
     if(typeof data.password==="string")setSecret({title,username:String(data.username??data.department??"koru_admin"),password:data.password});
     else setSecret(null);
     setStatus(title+" · başarılı");
-    setUnlocked(null);await refresh();
+    if(!path.endsWith("/resize"))setUnlocked(null);
+    await refresh();
   }
   async function keyList(){if(!unlocked)return;const result=await call(`/nodes/${unlocked.node}/keys`,"GET",undefined,unlocked.session) as {keys:string[]};setKeys(result.keys);}
   async function inspectKey(name:string) {
@@ -273,6 +288,10 @@ export default function MultiRedisManagerV87(){
                 }}>
                   {n.keyCount} keys · {mem(n.usedBytes)}
                   {" · "}{n.hits} HIT / {n.misses} MISS
+                  <RedisCapacityBarV893
+                    usedBytes={n.usedBytes}
+                    maxMemoryBytes={n.memoryMb*1048576}
+                  />
                 </div>
               : <div style={{
                   color:sub,
@@ -311,6 +330,28 @@ export default function MultiRedisManagerV87(){
             setUnlocked({node:selected,session:result.session,department:result.department});setPassword("");setStatus(`${selected} / ${result.department} giriş başarılı; audit kaydı oluşturuldu.`);
           })}>Şifreyle Bağlan</button>
           {unlocked?.node===selected&&<div style={{marginTop:12,color:green,fontSize:13}}>✓ {unlocked.department} oturumu · 10 dakika · yalnızca bu sekmede</div>}
+          {unlocked?.node===selected&&chosen&&
+            <div style={{
+              marginTop:14,
+              padding:14,
+              border:`1px solid ${line}`,
+              borderRadius:12,
+              background:"#f7faf9"
+            }}>
+              <strong>{chosen.id.toUpperCase()} · RAM kapasitesi</strong>
+              <RedisCapacityBarV893
+                usedBytes={chosen.connected?chosen.usedBytes:null}
+                maxMemoryBytes={chosen.memoryMb*1048576}
+              />
+              <p style={{
+                fontSize:11,
+                color:sub,
+                marginBottom:0
+              }}>
+                ACL: {unlocked.department}. Bu bar Redis instance
+                toplamını gösterir; kullanıcıya özel kota değildir.
+              </p>
+            </div>}
         </div>
         {unlocked?.node===selected&&<div style={panel}>
           <h3 style={{marginTop:0}}>Keyspace Explorer</h3>
@@ -416,6 +457,16 @@ export default function MultiRedisManagerV87(){
           </div>
         </div>}
       </div>}
+      {/* KORU_V896_ONLY_ACTIVE_ACL_ACCOUNT */}
+      {chosen&&unlocked?.node===selected&&
+        <RedisDepartmentCapacityV895
+          key={`${selected}-${unlocked.session}`}
+          nodeId={selected}
+          token={token}
+          admin={roles.includes("admin")}
+          session={unlocked.session}
+        />
+      }
       {snapshot?.canProvision&&<>
         <h3 id="koru-new-redis" style={{marginTop:26}}>Infrastructure Administration · Admin</h3>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))",gap:14}}>
@@ -431,9 +482,99 @@ export default function MultiRedisManagerV87(){
             <div style={{fontSize:12,color:sub}}>Departman ataması</div>
             <select style={{...field,marginTop:6}} value={assignDept} onChange={e=>setAssignDept(e.target.value)}>{deptNames.map(x=><option key={x} value={x}>{names[x]}</option>)}</select>
             <div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:9}}>
-              <button style={action} disabled={busy} onClick={()=>void run(()=>admin(`/nodes/${selected}/assign`,{department:assignDept},"Departman atandı"))}>Ata + şifre üret</button>
-              <button style={soft} disabled={busy||!chosen.departments.includes(assignDept)} onClick={()=>{if(window.confirm("Departman bu Redis'ten çıkarılsın mı?"))void run(()=>admin(`/nodes/${selected}/unassign`,{department:assignDept},"Atama kaldırıldı"));}}>Atamayı Kaldır</button>
+              <button
+                style={action}
+                disabled={busy||chosen.departments.includes(assignDept)}
+                onClick={()=>void run(()=>admin(
+                  `/nodes/${selected}/assign`,
+                  {department:assignDept},
+                  "Departman atandı"
+                ))}
+              >
+                Ata + şifre üret
+              </button>
+
             </div>
+            {/* KORU_V894_ASSIGNMENT_LIST */}
+            <div style={{
+              marginTop:18,
+              padding:13,
+              background:"#f7faf9",
+              border:`1px solid ${line}`,
+              borderRadius:12
+            }}>
+              <div style={{
+                fontSize:13,
+                fontWeight:700,
+                marginBottom:10
+              }}>
+                Mevcut Atamalar ({chosen.departments.length})
+              </div>
+
+              {chosen.departments.length===0
+                ? <p style={{
+                    color:sub,
+                    fontSize:12,
+                    margin:0
+                  }}>
+                    Bu Redis'e atanmış departman yok.
+                  </p>
+                : chosen.departments.map(department=>(
+                    <div
+                      key={department}
+                      style={{
+                        display:"flex",
+                        justifyContent:"space-between",
+                        alignItems:"center",
+                        flexWrap:"wrap",
+                        gap:8,
+                        padding:"9px 0",
+                        borderBottom:`1px solid ${line}`
+                      }}
+                    >
+                      <span style={{fontSize:13}}>
+                        <strong>
+                          {names[department]??department}
+                        </strong>
+                        <span style={{
+                          color:sub,
+                          marginLeft:6
+                        }}>
+                          ({department})
+                        </span>
+                      </span>
+
+                      <button
+                        type="button"
+                        style={{
+                          ...soft,
+                          color:"#9b3c4b"
+                        }}
+                        disabled={busy}
+                        onClick={()=>{
+                          const message =
+                            `${chosen.id.toUpperCase()} / `+
+                            `${department} ataması kaldırılsın?\n\n`+
+                            "Bu ekibin Redis ACL erişimi iptal edilir. "+
+                            "Redis kısa süre yeniden başlayabilir. "+
+                            "Mevcut key'ler silinmez.";
+
+                          if(window.confirm(message)){
+                            void run(()=>admin(
+                              `/nodes/${chosen.id}/unassign`,
+                              {department},
+                              `${department} ataması kaldırıldı`
+                            ));
+                          }
+                        }}
+                      >
+                        Atamayı Kaldır
+                      </button>
+                    </div>
+                  ))
+              }
+            </div>
+
             <div style={{fontSize:12,color:sub,marginTop:15}}>ACL şifresi yenile</div>
             <select style={{...field,marginTop:6}} value={rotateUser} onChange={e=>setRotateUser(e.target.value)}>{["koru_admin",...chosen.departments].map(x=><option key={x} value={x}>{x}</option>)}</select>
             <button style={{...action,marginTop:9}} disabled={busy} onClick={()=>{if(window.confirm("Şifre değişince önceki oturumlar geçersiz olur. Devam?"))void run(()=>admin(`/nodes/${selected}/rotate`,{username:rotateUser},"ACL şifresi yenilendi"));}}>Şifreyi Yenile</button>

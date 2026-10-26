@@ -288,7 +288,9 @@ public static class RedisMultiControlV87
                     entries.Add(new {
                         id=node.Id,unlocked=false,
                         port=0,memoryMb=0,
-                        departments=Array.Empty<string>(),
+                        departments=Admin(user)
+                            ? node.Departments
+                            : Array.Empty<string>(),
                         connected=false,usedBytes=0L,
                         keyCount=0L,hits=0L,misses=0L
                     });
@@ -528,6 +530,107 @@ public static class RedisMultiControlV87
             }
         });
 
+        // KORU_V895_DEPARTMENT_QUOTA
+        // KORU_V896_STRICT_ACL_STORAGE_SCOPE
+        group.MapGet("/nodes/{id}/department-capacity",async (
+            string id,ClaimsPrincipal user,HttpContext ctx) =>
+        {
+            var node=Node(id);
+
+            if(node==null)
+                return Results.NotFound();
+
+            if(!MaySee(user,node))
+                return Results.Forbid();
+
+            // Keycloak admin olmak, baska ACL hesaplarinin
+            // storage verilerini gorme yetkisi vermez.
+            if(!TrySession(ctx,user,id,out var session))
+                return Results.Unauthorized();
+
+            var account=session!.Username;
+
+            // Mevcut koru_admin key'leri varsayilan olarak
+            // koru:redis:* namespace'inde tutuluyor.
+            var measureDept=account=="koru_admin"
+                ? "redis" : account;
+
+            try
+            {
+                using var conn=await Connect(
+                    node,"koru_admin",AdminPassword(id)!);
+
+                var db=conn.GetDatabase();
+                var server=conn.GetServer(
+                    "127.0.0.1",node.Port);
+
+                var measurement=await RedisDeptQuotaV895
+                    .MeasureAsync(db,server,measureDept);
+
+                // Admin'in ozel departman kotasi yok.
+                // Diger ACL hesaplari yalnizca kendi kotalarini gorur.
+                var accountQuota=account=="koru_admin"
+                    ? 0
+                    : RedisDeptQuotaV895.Quota(id,account);
+
+                return Results.Ok(new {
+                    node=id,
+                    account,
+                    memoryMb=node.MemoryMb,
+                    assignedMb=accountQuota,
+                    departments=new[] {
+                        new {
+                            department=account,
+                            quotaMb=accountQuota,
+                            usedBytes=measurement.Used,
+                            sampledKeys=measurement.Keys,
+                            complete=measurement.Complete
+                        }
+                    }
+                });
+            }
+            catch(Exception ex)
+            {
+                Console.Error.WriteLine(
+                    "[V896 STORAGE] "+ex.GetType().Name);
+
+                return Results.Problem(
+                    "Account storage measurement unavailable",
+                    statusCode:503);
+            }
+        });
+
+        group.MapPut(
+            "/nodes/{id}/department-capacity/{department}",
+            async (string id,string department,
+                V87Memory input,ClaimsPrincipal user) =>
+        {
+            if(!Admin(user))return Results.Forbid();
+
+            var node=Node(id);
+
+            if(node==null ||
+               !node.Departments.Contains(department))
+                return Results.BadRequest(new {
+                    message="Redis veya departman atamasi bulunamadi"
+                });
+
+            var error=await RedisDeptQuotaV895.SaveAsync(
+                id,department,input.MemoryMb,
+                node.MemoryMb,node.Departments);
+
+            if(error!=null)
+                return Results.BadRequest(new {message=error});
+
+            await Audit(user,id,department,
+                "department.quota.update","success");
+
+            return Results.Ok(new {
+                updated=true,department,
+                quotaMb=input.MemoryMb
+            });
+        });
+
         group.MapPost("/nodes/{id}/key/set",async (
             string id,V87Set input,
             ClaimsPrincipal user,HttpContext ctx) =>
@@ -553,18 +656,22 @@ public static class RedisMultiControlV87
                 using var conn=await Connect(
                     Node(id)!,"koru_admin",AdminPassword(id)!);
 
-                var result=input.TtlSeconds==0
-                    ? await conn.GetDatabase().ExecuteAsync(
-                        "SET",(RedisKey)key,
-                        (RedisValue)input.Value)
-                    : await conn.GetDatabase().ExecuteAsync(
-                        "SET",(RedisKey)key,
-                        (RedisValue)input.Value,
-                        "EX",input.TtlSeconds);
+                var server=conn.GetServer(
+                    "127.0.0.1",Node(id)!.Port);
 
-                if(result.ToString()!="OK")
-                    throw new InvalidOperationException(
-                        "SET not acknowledged");
+                var written=await RedisDeptQuotaV895.WriteAsync(
+                    id,key,input.Value,input.TtlSeconds,
+                    conn.GetDatabase(),server);
+
+                if(!written)
+                {
+                    await Audit(user,id,session.Username,
+                        "key.set","quota-exceeded");
+
+                    return Results.Conflict(new {
+                        message="Departman RAM kotasi asiliyor."
+                    });
+                }
 
                 await Audit(
                     user,id,session.Username,"key.set","success");
@@ -712,6 +819,15 @@ public static class RedisMultiControlV87
         {
             if(!Admin(u))return Results.Forbid();
             if(!SafeNode(id)||input.MemoryMb<32||input.MemoryMb>16384)return Results.BadRequest();
+            var resizeNode=Node(id);
+            if(resizeNode==null)return Results.NotFound();
+
+            if(RedisDeptQuotaV895.Allocated(
+                id,resizeNode.Departments)>input.MemoryMb)
+                return Results.BadRequest(new {
+                    message="Once departman kotalarini azaltin."
+                });
+
             var r=await Control(app,"resize",id,input.MemoryMb.ToString(CultureInfo.InvariantCulture));
             await Audit(u,id,"-","node.resize",r.ok?"success":"failed");
             return r.ok?Results.Ok(r.result):Results.BadRequest(new {message=r.error});
