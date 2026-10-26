@@ -8,6 +8,7 @@ import {
 import { UserManager } from "oidc-client-ts";
 import Link from "next/link";
 import RedisStorageLiveV89 from "./RedisStorageLiveV89";
+import RedisCapacityBarV893 from "./RedisCapacityBarV893";
 
 type NodeMetric = {
   id: string;
@@ -249,6 +250,11 @@ function Trend({samples}: {samples: Sample[]}) {
 
 export default function RedisStoragePage() {
   const [token, setToken] = useState("");
+  const [legacy,setLegacy]=useState<{
+    cache:{usedMemoryBytes:number;maxMemoryBytes:number};
+    streams:{usedMemoryBytes:number;maxMemoryBytes:number};
+  }|null>(null);
+  const [legacyError,setLegacyError]=useState("");
   const [data, setData] = useState<Storage | null>(null);
   const [selected, setSelected] = useState("hr:redis-cache");
   const [budget, setBudget] = useState("256");
@@ -374,6 +380,46 @@ export default function RedisStoragePage() {
 
     return () => window.clearInterval(id);
   }, [token, auto, refresh]);
+
+  useEffect(()=>{
+    if(!token)return;
+    let active=true;
+
+    async function loadLegacy(){
+      try{
+        const response=await fetch(
+          "/api/v8/redis/storage/reality/live",
+          {
+            headers:{Authorization:`Bearer ${token}`},
+            cache:"no-store"
+          }
+        );
+
+        if(!response.ok)throw Error(`HTTP ${response.status}`);
+
+        const result=await response.json();
+
+        if(active){
+          setLegacy(result);
+          setLegacyError("");
+        }
+      }catch(e){
+        if(active){
+          setLegacyError(
+            e instanceof Error?e.message:"Baglanti hatasi"
+          );
+        }
+      }
+    }
+
+    void loadLegacy();
+    const timer=window.setInterval(()=>void loadLegacy(),15000);
+
+    return ()=>{
+      active=false;
+      window.clearInterval(timer);
+    };
+  },[token]);
 
   const item = data?.departments.find(
     d => `${d.department}:${d.nodeId}` === selected
@@ -505,6 +551,23 @@ export default function RedisStoragePage() {
     }
   }
 
+  const legacyRows:NodeMetric[]=legacy ? [
+    {
+      id:"redis-cache",
+      connected:true,
+      usedBytes:legacy.cache.usedMemoryBytes,
+      maxMemoryBytes:legacy.cache.maxMemoryBytes,
+      error:null
+    },
+    {
+      id:"redis-streams",
+      connected:true,
+      usedBytes:legacy.streams.usedMemoryBytes,
+      maxMemoryBytes:legacy.streams.maxMemoryBytes,
+      error:null
+    }
+  ] : data?.nodes ?? [];
+
   return (
     <main style={{
       maxWidth: 1500,
@@ -616,8 +679,14 @@ export default function RedisStoragePage() {
           Departman kullanımından bağımsızdır.
         </p>
 
+        {legacyError&&<p style={{
+          fontSize:12,color:"#a36c32"
+        }}>
+          Legacy INFO ölçümü: {legacyError}.
+          Son bilinen veriler gösteriliyor.
+        </p>}
         <div style={grid}>
-          {data?.nodes.map(node => (
+          {legacyRows.map(node => (
             <div key={node.id} style={{
               border: `1px solid ${palette.border}`,
               borderRadius: 12,
@@ -642,13 +711,9 @@ export default function RedisStoragePage() {
                     : "Limit tanımsız"}
                 </span>
               </div>
-              <Bar
-                value={
-                  node.connected && node.maxMemoryBytes > 0
-                    ? node.usedBytes
-                    : null
-                }
-                max={node.maxMemoryBytes}
+              <RedisCapacityBarV893
+                usedBytes={node.connected?node.usedBytes:null}
+                maxMemoryBytes={node.maxMemoryBytes}
               />
             </div>
           ))}
