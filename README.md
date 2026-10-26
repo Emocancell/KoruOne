@@ -126,7 +126,7 @@ Temel gereksinimler: `redis-vs-redis-enterprise-calisma(5).md`. Redis OSS ve Red
  Sifre     : sM1WexIhZls-WVjmwENJBCQHitnkj8Y0ZBMBIK5alJ-jH7GL
 ----------------------------------------------------------
  Kullanici : hr
- Sifre     : sEg_SlI23p_gFP85zmL5P0SLX44viNRdxaD5Ci-p3p7_v4JF
+ Sifre     : sEg_SlI23p_gFP85zmL5P0SLX44viNRdxaD5Ci-p3p7_v4JF            lzUc_ohs_cb5e64mCpQgF1vdtouAJKmChRugMX-UF7r3kVbJ
 ----------------------------------------------------------
  Kullanici : marketing
  Sifre     : ffmw67BKaKB7emqCbBaTStjGhccwBxwWg4PHEJNs1f6zqcyK
