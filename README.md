@@ -167,3 +167,49 @@ Temel gereksinimler: `redis-vs-redis-enterprise-calisma(5).md`. Redis OSS ve Red
 ==========================================================
  SIFRE LISTESI TAMAMLANDI
 ==========================================================
+
+
+
+
+
+
+
+Yönetici
+Kullanıcı: demo.admin
+Şifre: _B0eLo0z-DNxmsjKaj5cfNlW
+Rol: admin
+
+İK
+Kullanıcı: demo.hr
+Şifre: t4L2xOMRTq5ihrJzhuVUB8Xy
+Rol: hr
+
+Network
+Kullanıcı: demo.network
+Şifre: 0Un5TvHqGPjquGwHqidjxFS3
+Rol: network
+
+IT
+Kullanıcı: demo.it
+Şifre: B0qHKlvUALHMKeNnMVqZ_BJA
+Rol: it
+
+Pazarlama
+Kullanıcı: demo.marketing
+Şifre: 0taXolSHC1Tk7g3pCK_MZIHp
+Rol: marketing
+
+Reklam
+Kullanıcı: demo.advertising
+Şifre: 2RU3oMrZ2QrlsPwvDk5G_ZAr
+Rol: advertising
+
+Redis İzleme
+Kullanıcı: demo.redis.viewer
+Şifre: Y1eFCmUyW5Y9vlWLo2Lvj6IQ
+Rol: redis-viewer
+
+Redis Operasyon
+Kullanıcı: demo.redis.operator
+Şifre: btPqUoM_PtrYT57bk2g_fXig
+Rol: redis-operator
