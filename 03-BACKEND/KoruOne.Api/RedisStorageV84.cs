@@ -179,41 +179,60 @@ public static class RedisStorageV84
         return await cmd.ExecuteScalarAsync() is true;
     }
 
+    // KORU_V897_LEGACY_REDIS_CONNECTION
+    // REDIS_URL ve REDIS_STREAMS_URL onceliklidir.
+    // Eski parola degiskenleri geriye uyumluluk icin desteklenir.
     private static async Task<ConnectionMultiplexer>
         Connection(string node)
     {
-        bool cache = node == "redis-cache";
+        bool cache=node=="redis-cache";
 
-        string env = cache
+        string urlEnv=cache
+            ? "REDIS_URL"
+            : "REDIS_STREAMS_URL";
+
+        string passwordEnv=cache
             ? "REDIS_CACHE_PASSWORD"
             : "REDIS_STREAMS_PASSWORD";
 
-        string? password =
-            Environment.GetEnvironmentVariable(env);
+        string? url=Environment.GetEnvironmentVariable(urlEnv);
+        string? password=Environment.GetEnvironmentVariable(passwordEnv);
 
-        if (string.IsNullOrWhiteSpace(password))
+        if(string.IsNullOrWhiteSpace(url) &&
+           string.IsNullOrWhiteSpace(password))
             throw new InvalidOperationException(
-                "Redis credentials are missing.");
+                "Redis connection configuration missing.");
 
-        var lazy = Connections.GetOrAdd(
+        var lazy=Connections.GetOrAdd(
             node,
-            _ => new Lazy<Task<ConnectionMultiplexer>>(
-                async () =>
+            _=>new Lazy<Task<ConnectionMultiplexer>>(
+                async ()=>
                 {
-                    var opt = new ConfigurationOptions
-                    {
-                        Password = password,
-                        AllowAdmin = true,
-                        AbortOnConnectFail = false,
-                        ConnectTimeout = 3000,
-                        AsyncTimeout = 3000
-                    };
+                    ConfigurationOptions options;
 
-                    opt.EndPoints.Add(
-                        "127.0.0.1", cache ? 6379 : 6380);
+                    if(!string.IsNullOrWhiteSpace(url))
+                    {
+                        options=ConfigurationOptions.Parse(url,true);
+                    }
+                    else
+                    {
+                        options=new ConfigurationOptions
+                        {
+                            Password=password
+                        };
+                    }
+
+                    if(options.EndPoints.Count==0)
+                        options.EndPoints.Add(
+                            "127.0.0.1",cache?6379:6380);
+
+                    options.AllowAdmin=true;
+                    options.AbortOnConnectFail=false;
+                    options.ConnectTimeout=3000;
+                    options.AsyncTimeout=3000;
 
                     return await ConnectionMultiplexer
-                        .ConnectAsync(opt);
+                        .ConnectAsync(options);
                 }));
 
         try
@@ -222,7 +241,7 @@ public static class RedisStorageV84
         }
         catch
         {
-            Connections.TryRemove(node, out _);
+            Connections.TryRemove(node,out _);
             throw;
         }
     }
