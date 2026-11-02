@@ -9,6 +9,7 @@ import { UserManager } from "oidc-client-ts";
 import Link from "next/link";
 import RedisStorageLiveV89 from "./RedisStorageLiveV89";
 import RedisCapacityBarV893 from "./RedisCapacityBarV893";
+import RedisStorageAuditV897 from "./RedisStorageAuditV897";
 
 type NodeMetric = {
   id: string;
@@ -267,6 +268,9 @@ export default function RedisStoragePage() {
     useState<StoragePlanV85[]>([]);
   const [planBusyV85, setPlanBusyV85] = useState("");
   const [planErrorV85, setPlanErrorV85] = useState("");
+
+  // KORU_STORAGE_UI_P3_SAFE
+  const [liveOpen,setLiveOpen]=useState(false);
 
 
   useEffect(() => {
@@ -671,8 +675,26 @@ export default function RedisStoragePage() {
 
       <MultiRedisManagerV87/>
 
-      <h2 style={{marginTop:28}}>Legacy Redis Storage (6379 / 6380)</h2>
-      <section style={{...card, marginTop: 20}}>
+      <details style={{...card,marginTop:22}}>
+        <summary style={{
+          cursor:"pointer",
+          fontSize:17,
+          fontWeight:800,
+          color:palette.ink
+        }}>
+          Legacy Redis Storage · Cache & Streams
+          <span style={{
+            display:"block",
+            fontSize:12,
+            fontWeight:400,
+            color:palette.muted,
+            marginTop:6
+          }}>
+            Port 6379 / 6380 · RAM, limit ve kapasite ölçümleri
+          </span>
+        </summary>
+
+        <section style={{marginTop:18}}>
         <h2>Physical Redis Capacity</h2>
         <p style={{color: palette.muted, fontSize: 13}}>
           Instance genelindeki gerçek Redis bellek verisi.
@@ -718,12 +740,208 @@ export default function RedisStoragePage() {
             </div>
           ))}
         </div>
-      </section>
+        </section>
+      </details>
 
-      {data?.isAdmin && <RedisStorageLiveV89 token={token} />}
+      {data?.isAdmin && (
+        <details
+          style={{...card,marginTop:20}}
+          onToggle={e=>setLiveOpen(e.currentTarget.open)}
+        >
+          <summary style={{
+            cursor:"pointer",
+            fontSize:17,
+            fontWeight:800,
+            color:palette.ink
+          }}>
+            Real Redis Keyspace Breakdown
+            <span style={{
+              display:"block",
+              fontSize:12,
+              fontWeight:400,
+              color:palette.muted,
+              marginTop:6
+            }}>
+              Redis 01+ · Key sayısı, RAM ve namespace dağılımı
+            </span>
+          </summary>
 
-      <section style={{...card, marginTop: 20}}>
-        <h2>Department Storage Allocation</h2>
+          {liveOpen &&
+            <RedisStorageLiveV89 token={token}/>
+          }
+        </details>
+      )}
+
+      {/* KORU_STORAGE_AUDIT_V897 */}
+      {data?.isAdmin &&
+        <RedisStorageAuditV897 token={token}/>
+      }
+
+      {/* KORU_V85_PLAN_MANAGER */}
+      {data?.isAdmin && (
+        <details style={{...card,marginTop:20}}>
+          <summary style={{
+            cursor:"pointer",
+            fontSize:17,
+            fontWeight:800
+          }}>
+            Storage Plan Manager
+            <span style={{
+              display:"block",
+              fontSize:12,
+              fontWeight:400,
+              color:palette.muted,
+              marginTop:6
+            }}>
+              {plansV85.length} plan · Düzenle, pasife al, geri yükle
+            </span>
+          </summary>
+
+          <section style={{marginTop:18}}>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12
+          }}>
+            <div>
+              <h2>Storage Plan Manager</h2>
+              <p style={{
+                fontSize: 13, color: palette.muted
+              }}>
+                Planları düzenle, pasife al veya geri yükle.
+                Redis anahtarları hiçbir zaman silinmez.
+              </p>
+            </div>
+            <a href="/redis-operations">
+              Alerts & Slowlog →
+            </a>
+          </div>
+
+          {planErrorV85 && (
+            <p role="alert" style={{color:"#b43c47"}}>
+              {planErrorV85}
+            </p>
+          )}
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(260px,1fr))",
+            gap: 12,
+            marginTop: 17
+          }}>
+            {plansV85.map(plan => {
+              const key =
+                `${plan.department}:${plan.nodeId}`;
+
+              return (
+                <div key={key} style={{
+                  border: "1px solid #e1e9ed",
+                  padding: 17,
+                  borderRadius: 12
+                }}>
+                  <strong>
+                    {names[plan.department] ||
+                     plan.department}
+                  </strong>
+                  <p style={{
+                    fontSize: 12, color: palette.muted
+                  }}>
+                    {nodeNames[plan.nodeId]}
+                    {" · "}{plan.prefix}
+                  </p>
+                  <p>
+                    <b>{plan.budgetMb} MB</b>
+                    {" · "}
+                    <span style={{
+                      color: plan.active
+                        ? "#148068" : "#b14d4f"
+                    }}>
+                      {plan.active ? "Aktif" : "Pasif"}
+                    </span>
+                  </p>
+                  <div style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8
+                  }}>
+                    {plan.active && (
+                      <button
+                        className="secondary"
+                        type="button"
+                        onClick={() => {
+                          setSelected(key);
+
+                          const editor=document.getElementById(
+                            "v84-capacity-editor"
+                          );
+
+                          const details=editor?.closest("details");
+
+                          if(details){
+                            details.open=true;
+                          }
+
+                          editor?.scrollIntoView({
+                            behavior:"smooth",
+                            block:"center"
+                          });
+                        }}
+                      >
+                        Düzenle
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={Boolean(planBusyV85)}
+                      onClick={() =>
+                        void togglePlanV85(plan)}
+                      style={{
+                        background: plan.active
+                          ? "#a9434b"
+                          : "#176d54"
+                      }}
+                    >
+                      {planBusyV85 === key
+                        ? "Kaydediliyor..."
+                        : plan.active
+                          ? "Planı Sil"
+                          : "Geri Yükle"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          </section>
+        </details>
+      )}
+
+      {/* Mevcut departman kullanimlari korunur */}
+      {/* KORU_STORAGE_ALLOCATION_HIDDEN_CSS_V2 */}
+      <details hidden aria-hidden="true" style={{...card,marginTop:20,display:"none"}}>
+        <summary style={{
+          cursor:"pointer",
+          fontSize:17,
+          fontWeight:800
+        }}>
+          Department Storage Allocation · Ayrıntılı
+          <span style={{
+            display:"block",
+            fontSize:12,
+            fontWeight:400,
+            color:palette.muted,
+            marginTop:6
+          }}>
+            {data?.departments.length??0} kaynak ·
+            Departman bazlı namespace ve kullanım
+          </span>
+        </summary>
+
+        <section style={{marginTop:18}}>
         <p style={{color: palette.muted, fontSize: 13}}>
           Her satır yalnızca ilgili Redis namespace'ine
           ait ölçülen anahtar belleğini gösterir.
@@ -818,122 +1036,8 @@ export default function RedisStoragePage() {
             </p>
           )}
         </div>
-      </section>
-
-      {/* KORU_V85_PLAN_MANAGER */}
-      {data?.isAdmin && (
-        <section style={{...card, marginTop: 20}}>
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12
-          }}>
-            <div>
-              <h2>Storage Plan Manager</h2>
-              <p style={{
-                fontSize: 13, color: palette.muted
-              }}>
-                Planları düzenle, pasife al veya geri yükle.
-                Redis anahtarları hiçbir zaman silinmez.
-              </p>
-            </div>
-            <a href="/redis-operations">
-              Alerts & Slowlog →
-            </a>
-          </div>
-
-          {planErrorV85 && (
-            <p role="alert" style={{color:"#b43c47"}}>
-              {planErrorV85}
-            </p>
-          )}
-
-          <div style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(260px,1fr))",
-            gap: 12,
-            marginTop: 17
-          }}>
-            {plansV85.map(plan => {
-              const key =
-                `${plan.department}:${plan.nodeId}`;
-
-              return (
-                <div key={key} style={{
-                  border: "1px solid #e1e9ed",
-                  padding: 17,
-                  borderRadius: 12
-                }}>
-                  <strong>
-                    {names[plan.department] ||
-                     plan.department}
-                  </strong>
-                  <p style={{
-                    fontSize: 12, color: palette.muted
-                  }}>
-                    {nodeNames[plan.nodeId]}
-                    {" · "}{plan.prefix}
-                  </p>
-                  <p>
-                    <b>{plan.budgetMb} MB</b>
-                    {" · "}
-                    <span style={{
-                      color: plan.active
-                        ? "#148068" : "#b14d4f"
-                    }}>
-                      {plan.active ? "Aktif" : "Pasif"}
-                    </span>
-                  </p>
-                  <div style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8
-                  }}>
-                    {plan.active && (
-                      <button
-                        className="secondary"
-                        type="button"
-                        onClick={() => {
-                          setSelected(key);
-                          document.getElementById(
-                            "v84-capacity-editor"
-                          )?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center"
-                          });
-                        }}
-                      >
-                        Düzenle
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      disabled={Boolean(planBusyV85)}
-                      onClick={() =>
-                        void togglePlanV85(plan)}
-                      style={{
-                        background: plan.active
-                          ? "#a9434b"
-                          : "#176d54"
-                      }}
-                    >
-                      {planBusyV85 === key
-                        ? "Kaydediliyor..."
-                        : plan.active
-                          ? "Planı Sil"
-                          : "Geri Yükle"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </section>
-      )}
+      </details>
 
       {item && (
         <div style={{
@@ -943,8 +1047,14 @@ export default function RedisStoragePage() {
           gap: 16,
           marginTop: 20
         }}>
-          <section style={card}>
-            <h2>Memory Trend · Last Hour</h2>
+          <details style={card}>
+            <summary style={{
+              cursor:"pointer",
+              fontSize:17,
+              fontWeight:800
+            }}>
+              Memory Trend · Last Hour
+            </summary>
             <p style={{color: palette.muted, fontSize: 13}}>
               {names[item.department]} /{" "}
               {nodeNames[item.nodeId]}
@@ -961,10 +1071,19 @@ export default function RedisStoragePage() {
               Eksik veya kısmi taramalar tüm belleği
               temsil etmeyebilir.
             </p>
-          </section>
+          </details>
 
-          <section style={card}>
-            <h2 id="v84-capacity-editor">Capacity Policy</h2>
+          <details style={card}>
+            <summary
+              id="v84-capacity-editor"
+              style={{
+                cursor:"pointer",
+                fontSize:17,
+                fontWeight:800
+              }}
+            >
+              Capacity Policy
+            </summary>
             <p style={{color: palette.muted, fontSize: 13}}>
               {names[item.department]} ·{" "}
               {nodeNames[item.nodeId]}
@@ -1036,7 +1155,7 @@ export default function RedisStoragePage() {
               değildir. Yalnızca koru:...: biçimindeki
               çakışmayan namespace'ler kabul edilir.
             </p>
-          </section>
+          </details>
         </div>
       )}
 
