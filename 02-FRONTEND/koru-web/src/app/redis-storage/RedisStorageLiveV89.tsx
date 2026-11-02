@@ -162,28 +162,88 @@ export default function RedisStorageLiveV89({
       marginTop:20
     }}>
       {(data?.nodes??[]).map(node=>
-        <article key={node.id} style={{
+        <details key={node.id} style={{
           padding:18,
           border:`1px solid ${border}`,
-          borderRadius:13
+          borderRadius:13,
+          background:"#fff"
         }}>
-          <div style={{
+          {/* KORU_STORAGE_UI_P3_NODE */}
+          <summary style={{
             display:"flex",
             justifyContent:"space-between",
-            alignItems:"center"
+            alignItems:"center",
+            flexWrap:"wrap",
+            gap:10,
+            cursor:"pointer"
           }}>
-            <h3 style={{margin:0}}>
-              {node.id.replace("redis","Redis ")}
-            </h3>
             <span style={{
-              color:node.online?green:"#a83c46",
-              fontSize:12
+              display:"flex",
+              flexDirection:"column",
+              gap:5
+            }}>
+              <strong style={{fontSize:17}}>
+                {node.id.replace("redis","Redis ")}
+              </strong>
+
+              <span style={{color:muted,fontSize:12}}>
+                {node.online
+                  ? `${node.totalKeys} key · ${bytes(node.usedBytes)} RAM`
+                  : "Ölçüm kullanılamıyor"}
+              </span>
+            </span>
+
+            <span style={{
+              fontSize:12,
+              color:node.online?green:"#a83c46"
             }}>
               {node.online?"● Connected":"● Offline"}
+              {" · Detaylar ▾"}
             </span>
-          </div>
+          </summary>
 
           {node.online?<div>
+
+            {node.maxMemoryBytes>0&&
+              <div style={{marginTop:17}}>
+                <div style={{
+                  display:"flex",
+                  justifyContent:"space-between",
+                  gap:8,
+                  fontSize:12,
+                  color:muted
+                }}>
+                  <span>Redis RAM doluluğu</span>
+                  <strong>
+                    {bytes(node.usedBytes)}
+                    {" / "}
+                    {bytes(node.maxMemoryBytes)}
+                  </strong>
+                </div>
+
+                <div style={{
+                  height:10,
+                  background:"#e7efeb",
+                  borderRadius:15,
+                  marginTop:9,
+                  overflow:"hidden"
+                }}>
+                  <div style={{
+                    height:"100%",
+                    width:`${Math.min(
+                      100,
+                      Math.max(
+                        0,
+                        node.usedBytes/node.maxMemoryBytes*100
+                      )
+                    )}%`,
+                    background:green,
+                    borderRadius:15
+                  }}/>
+                </div>
+              </div>
+            }
+
             <div style={{
               display:"grid",
               gridTemplateColumns:"1fr 1fr",
@@ -236,7 +296,7 @@ export default function RedisStorageLiveV89({
           </div>:<p style={{color:muted,fontSize:13}}>
             Redis bağlantısı veya yönetici yetkisi kontrol edilmeli.
           </p>}
-        </article>
+        </details>
       )}
     </div>
 
